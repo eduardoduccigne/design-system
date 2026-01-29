@@ -14,6 +14,9 @@ jobs:
       contents: write
       packages: write
 
+    env:
+      NILO_GITHUB_TOKEN: ${{ secrets.PACKAGE_PUBLISH_TOKEN }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,8 +26,6 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          registry-url: https://npm.pkg.github.com
-          scope: '@nilohealth'
 
       - name: Get package version
         id: pkg
@@ -50,8 +51,6 @@ jobs:
       - name: Publish to GitHub Packages
         if: steps.tag.outputs.exists == 'false'
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_PUBLISH_TOKEN }}
 
       - name: Create GitHub Release
         if: steps.tag.outputs.exists == 'false'
