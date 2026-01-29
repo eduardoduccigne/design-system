@@ -124,6 +124,32 @@ export default function StyleguidePage() {
         </div>
       </Section>
 
+      {/* Yellow Scale */}
+      <Section title="Yellow Scale">
+        <p className="text-muted-foreground mb-4">
+          Amber tones for SLAs, time-sensitive alerts, and warning states. Uses dark foreground text for accessibility.
+        </p>
+        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-11 gap-4">
+          {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => (
+            <div key={shade} className="flex flex-col gap-2">
+              <div
+                className="w-full aspect-square rounded-lg border border-border"
+                style={{ backgroundColor: `var(--yellow-${shade})` }}
+              />
+              <p className="text-xs font-mono text-center text-muted-foreground">{shade}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 p-4 rounded-lg border border-border bg-card">
+          <p className="text-sm font-medium mb-2">Usage example:</p>
+          <div className="flex gap-3">
+            <span className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "var(--yellow)", color: "var(--yellow-foreground)" }}>SLA: 2h</span>
+            <span className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "var(--yellow-100)", color: "var(--yellow-800)" }}>Expiring soon</span>
+            <span className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "var(--yellow-200)", color: "var(--yellow-900)" }}>Pending</span>
+          </div>
+        </div>
+      </Section>
+
       {/* Semantic Colors */}
       <Section title="Semantic Colors">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">

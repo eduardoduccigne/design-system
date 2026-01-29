@@ -115,6 +115,21 @@
   --primary-900: #185536;
   --primary-950: #0F3622;
 
+  /* === YELLOW SCALE (amber for SLAs and alerts) === */
+  --yellow-50: #FFFBEB;
+  --yellow-100: #FEF3C7;
+  --yellow-200: #FDE68A;
+  --yellow-300: #FCD34D;
+  --yellow-400: #FBBF24;
+  --yellow-500: #F59E0B;
+  --yellow-600: #D97706;
+  --yellow-700: #B45309;
+  --yellow-800: #92400E;
+  --yellow-900: #78350F;
+  --yellow-950: #451A03;
+  --yellow: var(--yellow-500);
+  --yellow-foreground: #451A03;
+
   /* === EASING FUNCTIONS === */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -203,6 +218,21 @@
   --ai-end: #9AD4B5;
   --ai-gradient: linear-gradient(135deg, var(--ai-start) 0%, var(--ai-mid) 50%, var(--ai-end) 100%);
   --ai-foreground: #FFFFFF;
+
+  /* === YELLOW SCALE (amber for SLAs and alerts) === */
+  --yellow-50: #422006;
+  --yellow-100: #451A03;
+  --yellow-200: #78350F;
+  --yellow-300: #92400E;
+  --yellow-400: #B45309;
+  --yellow-500: #F59E0B;
+  --yellow-600: #FBBF24;
+  --yellow-700: #FCD34D;
+  --yellow-800: #FDE68A;
+  --yellow-900: #FEF3C7;
+  --yellow-950: #FFFBEB;
+  --yellow: var(--yellow-500);
+  --yellow-foreground: #451A03;
 }
 
 @theme inline {
@@ -263,6 +293,34 @@
   --color-neutral-800: var(--neutral-800);
   --color-neutral-900: var(--neutral-900);
   --color-neutral-950: var(--neutral-950);
+
+  /* Primary scale */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  /* Yellow scale */
+  --color-yellow-50: var(--yellow-50);
+  --color-yellow-100: var(--yellow-100);
+  --color-yellow-200: var(--yellow-200);
+  --color-yellow-300: var(--yellow-300);
+  --color-yellow-400: var(--yellow-400);
+  --color-yellow-500: var(--yellow-500);
+  --color-yellow-600: var(--yellow-600);
+  --color-yellow-700: var(--yellow-700);
+  --color-yellow-800: var(--yellow-800);
+  --color-yellow-900: var(--yellow-900);
+  --color-yellow-950: var(--yellow-950);
+  --color-yellow: var(--yellow);
+  --color-yellow-foreground: var(--yellow-foreground);
 
   /* Radius */
   --radius-sm: calc(var(--radius) - 4px);
@@ -362,5 +420,25 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@keyframes waveform-pulse {
+  0%, 100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
   }
 }
