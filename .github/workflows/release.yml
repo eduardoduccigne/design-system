@@ -15,7 +15,7 @@ jobs:
       packages: write
 
     env:
-      NILO_GITHUB_TOKEN: ${{ secrets.PACKAGE_PUBLISH_TOKEN }}
+      NILO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
