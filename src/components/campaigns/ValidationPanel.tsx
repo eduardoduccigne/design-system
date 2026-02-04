@@ -41,7 +41,7 @@ export function ValidationPanel({ validation }: ValidationPanelProps) {
         {validation.duplicates > 0 && (
           <div className="flex justify-between items-center py-1">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+              <AlertCircle className="w-3.5 h-3.5 text-warning" />
               Duplicados
             </span>
             <span className="font-medium">{validation.duplicates.toLocaleString("pt-BR")}</span>

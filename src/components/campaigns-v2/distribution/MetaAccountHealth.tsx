@@ -20,13 +20,13 @@ const qualityConfig = {
     label: "Atenção",
     variant: "warning" as const,
     Icon: AlertCircle,
-    iconColor: "text-amber-600 dark:text-amber-400",
+    iconColor: "text-warning",
   },
   red: {
     label: "Crítico",
     variant: "destructive" as const,
     Icon: XCircle,
-    iconColor: "text-red-600 dark:text-red-400",
+    iconColor: "text-destructive",
   },
 }
 
