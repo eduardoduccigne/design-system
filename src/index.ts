@@ -290,6 +290,32 @@ export {
   FormField,
 } from "./components/ui/form"
 
+// Footer
+export {
+  Footer,
+  FooterSeparator,
+  FooterLink,
+} from "./components/ui/footer"
+export type { FooterLinkProps } from "./components/ui/footer"
+
+// Header
+export {
+  Header,
+  HeaderContent,
+  HeaderGroup,
+  HeaderSeparator,
+  HeaderNav,
+  HeaderNavItem,
+  HeaderAction,
+  HeaderBadge,
+  HeaderProductBadge,
+} from "./components/ui/header"
+export type {
+  HeaderProps,
+  HeaderNavItemProps,
+  HeaderProductBadgeProps,
+} from "./components/ui/header"
+
 // Hover Card
 export {
   HoverCard,
