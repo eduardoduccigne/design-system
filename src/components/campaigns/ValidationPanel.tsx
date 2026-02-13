@@ -1,7 +1,8 @@
 "use client"
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { CheckCircle2, XCircle, AlertCircle, Users } from "lucide-react"
+import { CheckCircle2, XCircle, AlertCircle, Users, Snowflake, Info } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { AudienceValidation } from "@/lib/campaigns/types"
 
 interface ValidationPanelProps {
@@ -54,6 +55,37 @@ export function ValidationPanel({ validation }: ValidationPanelProps) {
               Opt-out
             </span>
             <span className="font-medium">{validation.optedOut.toLocaleString("pt-BR")}</span>
+          </div>
+        )}
+        {validation.frozen > 0 && (
+          <div className="flex justify-between items-center py-1">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Snowflake className="w-3.5 h-3.5 text-info" />
+              WhatsApp inacessível (excluídos)
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="inline-flex items-center">
+                      <Info className="w-3.5 h-3.5 text-info cursor-help" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <div className="space-y-2 text-sm">
+                      <p className="font-semibold">Por que o WhatsApp fica inacessível?</p>
+                      <p>Pacientes com 3 falhas de entrega em dias diferentes têm o WhatsApp marcado como inacessível.</p>
+                      <p className="text-xs text-muted-foreground">Os erros vêm do WhatsApp/Meta. Motivos comuns:</p>
+                      <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                        <li>Número não está no WhatsApp</li>
+                        <li>Paciente bloqueou mensagens comerciais</li>
+                        <li>WhatsApp desatualizado</li>
+                        <li>Paciente não aceitou novos termos</li>
+                      </ul>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
+            <span className="font-medium text-info">{validation.frozen.toLocaleString("pt-BR")}</span>
           </div>
         )}
       </CardContent>

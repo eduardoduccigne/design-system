@@ -142,11 +142,14 @@ export const campaignsByObjective: Record<CampaignObjective, CampaignTemplate[]>
 
 // Simulate file validation (mock)
 export function simulateFileValidation(): AudienceValidation {
+  const frozenCount = 89 // Mock: 89 frozen patients excluded
+
   return {
     total: 2847,
-    valid: 2650,
+    valid: 2650 - frozenCount, // Exclude frozen from valid count
     invalid: 112,
     duplicates: 45,
     optedOut: 40,
+    frozen: frozenCount,
   }
 }

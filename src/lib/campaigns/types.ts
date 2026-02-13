@@ -30,4 +30,5 @@ export interface AudienceValidation {
   invalid: number
   duplicates: number
   optedOut: number
+  frozen: number
 }
