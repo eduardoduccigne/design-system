@@ -12,7 +12,7 @@ import { AudienceStepV3 } from "./steps/AudienceStepV3"
 import { MessageStepV3 } from "./steps/MessageStepV3"
 import { DistributionStep } from "./steps/DistributionStep"
 import { ReviewStepV3 } from "./steps/ReviewStepV3"
-import { CampaignSuccess } from "@/components/campaigns/CampaignSuccess"
+import { CampaignDetailView } from "./CampaignDetailView"
 
 // Initial state
 const initialState: CampaignStateV3 = {
@@ -172,7 +172,7 @@ export function CampaignWizardV3() {
   if (state.isLaunched) {
     return (
       <CampaignContextV3.Provider value={{ state, dispatch }}>
-        <CampaignSuccess />
+        <CampaignDetailView />
       </CampaignContextV3.Provider>
     )
   }

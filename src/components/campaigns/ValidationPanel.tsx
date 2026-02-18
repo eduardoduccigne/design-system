@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { CheckCircle2, XCircle, AlertCircle, Users, Snowflake, Info } from "lucide-react"
+import { CheckCircle2, XCircle, AlertCircle, Users, Snowflake, Info, ExternalLink } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { AudienceValidation } from "@/lib/campaigns/types"
 
@@ -85,7 +85,15 @@ export function ValidationPanel({ validation }: ValidationPanelProps) {
                 </Tooltip>
               </TooltipProvider>
             </span>
-            <span className="font-medium text-info">{validation.frozen.toLocaleString("pt-BR")}</span>
+            <a
+              href="/settings/frozen-numbers"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-info hover:underline inline-flex items-center gap-1"
+            >
+              {validation.frozen.toLocaleString("pt-BR")}
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         )}
       </CardContent>
