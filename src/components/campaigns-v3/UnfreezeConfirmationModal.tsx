@@ -16,10 +16,10 @@ export function UnfreezeConfirmationModal({ patient, onConfirm }: UnfreezeConfir
 
   return (
     <ConfirmationModal
-      title="Descongelar número?"
-      description={`Tem certeza que deseja descongelar o número de ${patient.name}? Novas tentativas de envio serão realizadas.`}
+      title="Tentar enviar novamente"
+      description={`Tem certeza que deseja tornar o número de ${patient.name} acessível? Novas tentativas de envio serão realizadas.`}
       intent="destructive"
-      confirmLabel="Descongelar"
+      confirmLabel="Tornar acessível"
       onConfirm={handleConfirm}
       trigger={
         <Button variant="ghost" size="sm">

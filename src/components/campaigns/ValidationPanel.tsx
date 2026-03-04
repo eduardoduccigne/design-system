@@ -34,7 +34,7 @@ export function ValidationPanel({ validation }: ValidationPanelProps) {
           <div className="flex justify-between items-center py-1">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <XCircle className="w-3.5 h-3.5 text-destructive" />
-              Inválidos
+              Não encontrados
             </span>
             <span className="font-medium text-destructive">{validation.invalid.toLocaleString("pt-BR")}</span>
           </div>
@@ -72,8 +72,7 @@ export function ValidationPanel({ validation }: ValidationPanelProps) {
                   <TooltipContent className="max-w-xs">
                     <div className="space-y-2 text-sm">
                       <p className="font-semibold">Por que o WhatsApp fica inacessível?</p>
-                      <p>Pacientes com 3 falhas de entrega em dias diferentes têm o WhatsApp marcado como inacessível.</p>
-                      <p className="text-xs text-muted-foreground">Os erros vêm do WhatsApp/Meta. Motivos comuns:</p>
+                      <p>Pacientes com 3 falhas de entrega repetidas em dias diferentes têm o WhatsApp marcado como inacessível pela Nilo, para evitar envios desnecessários. Os erros vêm do WhatsApp/Meta comercial e os motivos mais comuns são:</p>
                       <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
                         <li>Número não está no WhatsApp</li>
                         <li>Paciente bloqueou mensagens comerciais</li>

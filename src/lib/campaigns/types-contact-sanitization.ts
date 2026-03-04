@@ -37,6 +37,7 @@ export interface FrozenPatientEnhanced {
   id: string
   name: string
   cpf: string
+  niloId?: string // Nilo platform patient ID
   phone: string
   clientName: string // Client company name (Banco Safra, Disney, etc.)
   clientId: string // For grouping

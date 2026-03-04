@@ -12,28 +12,11 @@ interface DistributionTypeSelectorProps {
 const distributionOptions: {
   value: DistributionType
   label: string
-  description: string
 }[] = [
-  {
-    value: "single_batch",
-    label: "Envio Único",
-    description: "Envie para todos de uma vez: ideal para baixo volume",
-  },
-  {
-    value: "workday_daily",
-    label: "Diário (dias úteis)",
-    description: "Um lote por dia útil: distribui volume ao longo dos dias",
-  },
-  {
-    value: "weekly",
-    label: "Semanal",
-    description: "Escolha dias da semana: controle fino do ritmo",
-  },
-  {
-    value: "monthly",
-    label: "Mensal",
-    description: "Um lote por mês: para campanhas de alto volume distribuídas",
-  },
+  { value: "single_batch", label: "Envio lote único" },
+  { value: "workday_daily", label: "Lotes diários (dias úteis)" },
+  { value: "weekly", label: "Lotes semanais" },
+  { value: "monthly", label: "Lotes mensais" },
 ]
 
 export function DistributionTypeSelector({ value, onChange }: DistributionTypeSelectorProps) {
@@ -57,10 +40,7 @@ export function DistributionTypeSelector({ value, onChange }: DistributionTypeSe
             `}
           >
             <RadioGroupItem value={option.value} className="mt-0.5" />
-            <div>
-              <div className="font-medium text-foreground">{option.label}</div>
-              <div className="text-sm text-muted-foreground">{option.description}</div>
-            </div>
+            <div className="font-medium text-foreground">{option.label}</div>
           </label>
         ))}
       </RadioGroup>

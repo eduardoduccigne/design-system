@@ -1,7 +1,6 @@
 "use client"
 
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
 import { AlertCircle, XCircle, Info } from "lucide-react"
 import type { DistributionValidation as DistributionValidationType } from "@/lib/campaigns/types-v3"
 
@@ -27,7 +26,7 @@ export function DistributionValidation({
       {validation.metaTierError && (
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
-          <AlertTitle>Limite de Envio Excedido</AlertTitle>
+          <AlertTitle>Limite WhatsApp de envio excedido</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>
               Esta distribuição excede seu limite diário de envio do WhatsApp (
@@ -45,11 +44,6 @@ export function DistributionValidation({
                 Limite: <strong>{validation.metaDailyLimit?.toLocaleString("pt-BR")} mensagens/dia</strong>
               </span>
             </div>
-            <div className="flex justify-end mt-2">
-              <Button variant="outline" size="sm" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-                Ajustar Distribuição
-              </Button>
-            </div>
           </AlertDescription>
         </Alert>
       )}
@@ -58,22 +52,14 @@ export function DistributionValidation({
       {validation.quotaWarning && !quotaWarningAcknowledged && (
         <Alert variant="warning">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Alerta de Cota</AlertTitle>
-          <AlertDescription className="space-y-3">
+          <AlertTitle>Alerta de cota Nilo</AlertTitle>
+          <AlertDescription>
             <p>
               Esta campanha usará mais mensagens do que sua cota disponível de{" "}
               {validation.exceedsMonth} ({validation.availableQuota?.toLocaleString("pt-BR")}).
               Consulte seu executivo de conta sobre as condições.
               Você pode continuar ou ajustar a distribuição.
             </p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-                Ajustar Distribuição
-              </Button>
-              <Button variant="outline" size="sm" onClick={onAcknowledgeWarning}>
-                Continuar mesmo assim
-              </Button>
-            </div>
           </AlertDescription>
         </Alert>
       )}

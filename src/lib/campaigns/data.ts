@@ -9,39 +9,39 @@ export const objectives: {
 }[] = [
   {
     id: "preventive_care",
-    name: "Cuidado Preventivo",
-    description: "Envie lembretes de exames preventivos e check-ups regulares",
+    name: "Captação para programa",
+    description: "Capture pacientes para programas de saúde e acompanhamento",
     icon: "Heart",
   },
   {
     id: "appointment_reminder",
-    name: "Lembrete de Consulta",
-    description: "Confirme e lembre pacientes sobre consultas agendadas",
+    name: "Agendamento de consulta",
+    description: "Convide pacientes para agendar consultas",
     icon: "Calendar",
   },
   {
-    id: "lab_results",
-    name: "Resultados de Exames",
-    description: "Notifique pacientes sobre resultados de exames disponíveis",
-    icon: "FileText",
-  },
-  {
     id: "treatment_followup",
-    name: "Acompanhamento",
-    description: "Acompanhe pacientes após procedimentos ou tratamentos",
+    name: "Questionário / rastreio",
+    description: "Envie questionários e rastreios de saúde aos pacientes",
     icon: "ClipboardList",
   },
   {
     id: "patient_onboarding",
-    name: "Boas-vindas",
-    description: "Receba novos pacientes com informações e orientações",
+    name: "Reengajamento",
+    description: "Reengaje pacientes inativos ou que abandonaram tratamento",
     icon: "UserCheck",
   },
   {
     id: "general_announcement",
-    name: "Comunicado Geral",
-    description: "Envie comunicados gerais para sua base de pacientes",
+    name: "Conscientização",
+    description: "Conscientize pacientes sobre temas de saúde e prevenção",
     icon: "Megaphone",
+  },
+  {
+    id: "no_objective",
+    name: "Sem Objetivo",
+    description: "Crie uma campanha sem um objetivo específico",
+    icon: "CircleDashed",
   },
 ]
 
@@ -138,18 +138,27 @@ export const campaignsByObjective: Record<CampaignObjective, CampaignTemplate[]>
       ],
     },
   ],
+  no_objective: [
+    {
+      id: "no-obj-generic",
+      name: "Mensagem Genérica",
+      messages: [
+        { id: "m1", day: 0, label: "D0 - Envio", content: "Olá {nome}, temos uma mensagem importante para você." },
+      ],
+    },
+  ],
 }
 
 // Simulate file validation (mock)
 export function simulateFileValidation(): AudienceValidation {
-  const frozenCount = 89 // Mock: 89 frozen patients excluded
+  const frozenCount = 340
 
   return {
-    total: 2847,
-    valid: 2650 - frozenCount, // Exclude frozen from valid count
-    invalid: 112,
-    duplicates: 45,
-    optedOut: 40,
+    total: 10000,
+    valid: 10000 - 450 - 180 - 160 - frozenCount,
+    invalid: 450,
+    duplicates: 180,
+    optedOut: 160,
     frozen: frozenCount,
   }
 }

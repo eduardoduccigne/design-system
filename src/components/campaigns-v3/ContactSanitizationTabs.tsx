@@ -22,7 +22,7 @@ export function ContactSanitizationTabs() {
       <Tabs defaultValue="frozen" className="w-full">
         <TabsList>
           <TabsTrigger value="frozen">
-            Números Congelados
+            Números inacessíveis
             <Badge variant="warning" className="ml-2">
               {frozenCount}
             </Badge>

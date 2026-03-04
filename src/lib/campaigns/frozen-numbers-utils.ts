@@ -47,6 +47,22 @@ export function calculateDaysInaccessible(frozenSince: string): number {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24))
 }
 
+function buildCSVRow(p: FrozenPatientEnhanced): string {
+  return `${p.id},${p.niloId ?? ""},${p.name},${p.cpf},${p.phone},${p.daysInaccessible},${p.attemptCount},${p.frozenSince}`
+}
+
+const CSV_HEADER = "patient_id,nilo_id,nome,cpf,telefone,dias_inacessivel,tentativas,data_congelamento"
+
+function triggerCSVDownload(csv: string, filename: string): void {
+  const blob = new Blob([csv], { type: "text/csv" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 /**
  * Export client-specific CSV with full patient data
  */
@@ -54,18 +70,14 @@ export function exportClientCSV(
   clientName: string,
   patients: FrozenPatientEnhanced[]
 ): void {
-  const csv = [
-    "patient_id,nome,cpf,telefone,dias_inacessivel,tentativas,data_congelamento",
-    ...patients.map(p =>
-      `${p.id},${p.name},${p.cpf},${p.phone},${p.daysInaccessible},${p.attemptCount},${p.frozenSince}`
-    )
-  ].join("\n")
+  const csv = [CSV_HEADER, ...patients.map(buildCSVRow)].join("\n")
+  triggerCSVDownload(csv, `numeros-inacessiveis-${clientName.toLowerCase().replace(/\s+/g, '-')}.csv`)
+}
 
-  const blob = new Blob([csv], { type: "text/csv" })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `numeros-congelados-${clientName.toLowerCase().replace(/\s+/g, '-')}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+/**
+ * Export all patients CSV across all clients
+ */
+export function exportAllPatientsCSV(patients: FrozenPatientEnhanced[]): void {
+  const csv = [CSV_HEADER, ...patients.map(buildCSVRow)].join("\n")
+  triggerCSVDownload(csv, "numeros-inacessiveis-todos.csv")
 }

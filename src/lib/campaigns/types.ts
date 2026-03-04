@@ -6,6 +6,7 @@ export type CampaignObjective =
   | "treatment_followup"
   | "patient_onboarding"
   | "general_announcement"
+  | "no_objective"
 
 // Campaign message in a sequence
 export interface CampaignMessage {

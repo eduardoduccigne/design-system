@@ -1,16 +1,16 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Heart, Calendar, FileText, ClipboardList, UserCheck, Megaphone } from "lucide-react"
+import { Heart, Calendar, ClipboardList, UserCheck, Megaphone, CircleDashed } from "lucide-react"
 import type { CampaignObjective } from "@/lib/campaigns/types"
 
 const iconMap = {
   Heart,
   Calendar,
-  FileText,
   ClipboardList,
   UserCheck,
   Megaphone,
+  CircleDashed,
 }
 
 interface ObjectiveCardProps {

@@ -52,6 +52,8 @@ export function ClientAccordionSection({
           <TableHeader>
             <TableRow>
               <TableHead>Paciente</TableHead>
+              <TableHead>CPF</TableHead>
+              <TableHead>ID Nilo</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Dias inacessível</TableHead>
@@ -62,6 +64,12 @@ export function ClientAccordionSection({
             {client.patients.map((patient) => (
               <TableRow key={patient.id}>
                 <TableCell>{patient.name}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {patient.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
+                </TableCell>
+                <TableCell className="font-mono text-sm text-muted-foreground">
+                  {patient.niloId ?? "—"}
+                </TableCell>
                 <TableCell className="font-mono text-sm">{patient.phone}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{patient.clientName}</TableCell>
                 <TableCell>

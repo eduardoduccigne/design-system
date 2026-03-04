@@ -66,10 +66,28 @@ export function MonthlyConfig({ config, audienceSize, onChange }: MonthlyConfigP
       ? calculateDistribution(config.ordinal, config.weekday, config.startMonth, audienceSize, config.sendsPerDay)
       : null
 
+  // Combined ordinal+weekday options: "ordinal:weekday"
+  const sendDayOptions = ordinalOptions.flatMap((ord) =>
+    weekdayOptions.map((day) => ({
+      value: `${ord.value}:${day.value}`,
+      label: `${ord.label} ${day.label} do mês`,
+    }))
+  )
+
+  const sendDayValue = config.ordinal != null && config.weekday != null
+    ? `${config.ordinal}:${config.weekday}`
+    : ""
+
+  const handleSendDayChange = (value: string) => {
+    const [ordinal, weekday] = value.split(":").map(Number)
+    onChange({ ...config, ordinal, weekday })
+  }
+
   return (
     <Card className="shadow-[var(--shadow-sm)] transition-nilo">
       <CardContent className="pt-6 space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {/* Line 1: Envios por dia + A partir de */}
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Envios por dia</Label>
             <Input
@@ -81,40 +99,42 @@ export function MonthlyConfig({ config, audienceSize, onChange }: MonthlyConfigP
               onChange={(e) => onChange({ ...config, sendsPerDay: parseInt(e.target.value) || 0 })}
             />
           </div>
-          <div className="space-y-2 col-span-2 sm:col-span-1">
+          <div className="space-y-2">
+            <Label>A partir de</Label>
+            <Select
+              value={config.startMonth ?? ""}
+              onValueChange={(value) => onChange({ ...config, startMonth: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Mês..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableMonths.map((month) => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Line 2: Dia do envio + Horário */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label>Dia do envio</Label>
-            <div className="flex gap-2">
-              <Select
-                value={config.ordinal?.toString() ?? ""}
-                onValueChange={(value) => onChange({ ...config, ordinal: parseInt(value) })}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue placeholder="Ord." />
-                </SelectTrigger>
-                <SelectContent>
-                  {ordinalOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value.toString()}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={config.weekday?.toString() ?? ""}
-                onValueChange={(value) => onChange({ ...config, weekday: parseInt(value) })}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Dia da semana..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {weekdayOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value.toString()}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={sendDayValue} onValueChange={handleSendDayChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {sendDayOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Horário</Label>
@@ -134,28 +154,6 @@ export function MonthlyConfig({ config, audienceSize, onChange }: MonthlyConfigP
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">GMT-3</p>
-          </div>
-        </div>
-
-        {/* Starting month */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>A partir de</Label>
-            <Select
-              value={config.startMonth ?? ""}
-              onValueChange={(value) => onChange({ ...config, startMonth: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Mês..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableMonths.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
