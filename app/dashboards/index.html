@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nilo — Relatório Superintendência Médica</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/tokens.css?v=1">
+  <link rel="stylesheet" href="css/base.css?v=1">
+  <link rel="stylesheet" href="css/layout.css?v=1">
+  <link rel="stylesheet" href="css/components.css?v=1">
+  <link rel="stylesheet" href="css/charts.css?v=1">
+  <link rel="stylesheet" href="css/utilities.css?v=1">
+  <link rel="stylesheet" href="css/morning-brief.css?v=1">
+  <link rel="stylesheet" href="css/ai-panel.css?v=1">
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <svg width="80" height="28" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <text x="0" y="22" font-family="Inter, sans-serif" font-size="22" font-weight="700" fill="#34AA6E">nilo</text>
+        </svg>
+        <span class="sidebar-logo__subtitle">Relatório Clínico</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#alerts" class="nav-item active" data-nav="alerts">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
+          <span class="nav-label">Alertas</span>
+        </a>
+        <a href="#pulse" class="nav-item" data-nav="pulse">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </span>
+          <span class="nav-label">Pulso da Popula&ccedil;&atilde;o</span>
+        </a>
+        <a href="#team" class="nav-item" data-nav="team">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          <span class="nav-label">Performance da Equipe</span>
+        </a>
+        <a href="#effectiveness" class="nav-item" data-nav="effectiveness">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          </span>
+          <span class="nav-label">Efetividade</span>
+        </a>
+        <a href="#providers" class="nav-item" data-nav="providers">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
+          <span class="nav-label">An&aacute;lise de Prestadores</span>
+        </a>
+        <a href="#portfolios" class="nav-item" data-nav="portfolios">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </span>
+          <span class="nav-label">Carteiras</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer__operator">Sa&uacute;de Exemplo S/A</div>
+        <div class="sidebar-footer__period" id="sidebar-period">Jan &ndash; Mar 2025</div>
+        <div class="sidebar-footer__lives" id="sidebar-lives">12.000 benefici&aacute;rios</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+
+      <!-- Top Bar with Filters -->
+      <header class="topbar">
+        <h1 class="topbar__title">Relat&oacute;rio de Gest&atilde;o Cl&iacute;nica</h1>
+        <div id="filter-bar" class="topbar__filters"></div>
+      </header>
+
+      <!-- Morning Brief -->
+      <div id="morning-brief" class="morning-brief"></div>
+
+      <!-- Dashboard Sections -->
+      <main class="main-content">
+        <section id="section-alerts" class="dashboard-section" data-section="alerts">
+          <div class="section-header">
+            <h2 class="section-title">Alertas e Oportunidades</h2>
+            <p class="section-subtitle">Onde agir agora? O que n&atilde;o posso deixar passar?</p>
+          </div>
+          <div class="section-body" id="alerts-content"></div>
+        </section>
+
+        <section id="section-pulse" class="dashboard-section hidden" data-section="pulse">
+          <div class="section-header">
+            <h2 class="section-title">Pulso da Popula&ccedil;&atilde;o</h2>
+            <p class="section-subtitle">O que est&aacute; acontecendo agora na minha carteira?</p>
+          </div>
+          <div class="section-body" id="pulse-content"></div>
+        </section>
+
+        <section id="section-team" class="dashboard-section hidden" data-section="team">
+          <div class="section-header">
+            <h2 class="section-title">Performance da Equipe</h2>
+            <p class="section-subtitle">Score de atendimento, qualidade, sentimento e ranking individual</p>
+          </div>
+          <div class="section-body" id="team-content"></div>
+        </section>
+
+        <section id="section-effectiveness" class="dashboard-section hidden" data-section="effectiveness">
+          <div class="section-header">
+            <h2 class="section-title">Efetividade do Programa</h2>
+            <p class="section-subtitle">O programa est&aacute; funcionando? Tenho evid&ecirc;ncia para defender isso?</p>
+          </div>
+          <div class="section-body" id="effectiveness-content"></div>
+        </section>
+
+        <section id="section-providers" class="dashboard-section hidden" data-section="providers">
+          <div class="section-header">
+            <h2 class="section-title">An&aacute;lise de Prestadores</h2>
+            <p class="section-subtitle">Como est&aacute; minha rede credenciada? Quem indicar e quem evitar?</p>
+          </div>
+          <div class="section-body" id="providers-content"></div>
+        </section>
+
+        <section id="section-portfolios" class="dashboard-section hidden" data-section="portfolios">
+          <div class="section-header">
+            <h2 class="section-title">Carteiras</h2>
+            <p class="section-subtitle">Como est&atilde;o as empresas contratantes? Onde agir proativamente?</p>
+          </div>
+          <div class="section-body" id="portfolios-content"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Charts Library -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <!-- App Scripts (ES Modules) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

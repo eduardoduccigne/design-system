@@ -1,0 +1,30 @@
+/* ===== Chart Overrides — Nilo ===== */
+
+.chart-container {
+  width: 100%;
+  min-height: 280px;
+}
+.chart-container--sm {
+  min-height: 200px;
+}
+.chart-container--lg {
+  min-height: 400px;
+}
+
+/* ApexCharts tooltip override */
+.apexcharts-tooltip {
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+  border: 1px solid var(--border) !important;
+}
+.apexcharts-tooltip-title {
+  background: var(--muted) !important;
+  border-bottom: 1px solid var(--border) !important;
+  font-weight: var(--font-weight-semibold) !important;
+}
+
+/* Treemap text */
+.apexcharts-treemap-rect {
+  rx: 4;
+  ry: 4;
+}

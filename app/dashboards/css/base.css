@@ -1,0 +1,61 @@
+/* ===== Reset & Base — Nilo Design System ===== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--foreground);
+  background-color: var(--background);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--foreground);
+}
+h1 { font-size: var(--font-size-2xl); }
+h2 { font-size: var(--font-size-xl); }
+h3 { font-size: var(--font-size-lg); }
+h4 { font-size: var(--font-size-base); }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img, svg { display: block; max-width: 100%; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+table { border-collapse: collapse; width: 100%; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--neutral-300); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--neutral-400); }
+
+/* Brazilian number helper */
+.num-br { font-variant-numeric: tabular-nums; }
