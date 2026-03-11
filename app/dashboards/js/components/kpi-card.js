@@ -1,7 +1,7 @@
 // ========== KPI Card Component (Nilo palette) ==========
 import { fmt } from '../app.js';
 
-export function createKPICard({ label, value, unit, trend, sparklineData, formatType }) {
+export function createKPICard({ label, value, unit, trend, sparklineData, formatType, benchmark }) {
   const card = document.createElement('div');
   card.className = 'kpi-card';
 
@@ -32,6 +32,7 @@ export function createKPICard({ label, value, unit, trend, sparklineData, format
       <span>${fmt.decimal.format(Math.abs(trend.value))}% vs. mes anterior</span>
     </div>
     ${sparklineData ? `<div class="kpi-card__sparkline" id="sparkline-${label.replace(/\s+/g, '-').toLowerCase()}"></div>` : ''}
+    ${benchmark ? `<div class="kpi-card__benchmark">vs ${fmt.decimal.format(benchmark.value)}${benchmark.unit} ${benchmark.label}</div>` : ''}
   `;
 
   // Render sparkline after DOM insertion (uses Nilo --primary color)

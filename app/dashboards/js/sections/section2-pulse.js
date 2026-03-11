@@ -32,6 +32,9 @@ export const SectionPulse = {
   },
 
   _buildContent(container, data, rawData) {
+    // KPI summary row
+    this._renderKPIRow(container, data, rawData);
+
     // US-05: Theme Map
     this._renderThemeMap(container, data, rawData);
 
@@ -42,7 +45,7 @@ export const SectionPulse = {
     this._renderRiskThemesTimeSeries(container, data, rawData);
 
     const grid = document.createElement('div');
-    grid.className = 'section-grid';
+    grid.className = 'section-grid mt-6';
 
     // US-08: ER Loop Funnel
     grid.appendChild(this._renderERLoop(data, rawData));
@@ -51,6 +54,71 @@ export const SectionPulse = {
     grid.appendChild(this._renderMentalHealth(data, rawData));
 
     container.appendChild(grid);
+  },
+
+  // ========== KPI Summary Row ==========
+  _renderKPIRow(container, data, rawData) {
+    const row = document.createElement('div');
+    row.className = 'kpi-row';
+
+    const cur = data._currentMonth;
+    const prev = data._previousMonth;
+    const months = data._months;
+    const kpis = rawData.monthlyKPIs;
+
+    const trend = (curVal, prevVal) =>
+      prevVal > 0 ? ((curVal - prevVal) / prevVal * 100) : 0;
+
+    // Beneficiários Ativos
+    const totalBenef = data._companies.reduce((s, c) => s + c.beneficiaries, 0);
+    const benefSparkline = months.map(() => totalBenef);
+
+    // Em Acompanhamento GSP (current month rate)
+    const gspCur = kpis[cur]?.gspRate ?? 0;
+    const gspPrev = kpis[prev]?.gspRate ?? gspCur;
+    const gspSparkline = months.map(m => kpis[m]?.gspRate ?? 0);
+
+    // Conversas no Período (current month)
+    const convCur = kpis[cur]?.conversations ?? 0;
+    const convPrev = kpis[prev]?.conversations ?? convCur;
+    const convSparkline = months.map(m => kpis[m]?.conversations ?? 0);
+
+    // Menções a PA (current month)
+    const erCur = kpis[cur]?.erMentions ?? 0;
+    const erPrev = kpis[prev]?.erMentions ?? erCur;
+    const erSparkline = months.map(m => kpis[m]?.erMentions ?? 0);
+
+    const cards = [
+      {
+        label: 'Beneficiários',
+        value: totalBenef,
+        trend: { value: 0, positive: true },
+        sparklineData: benefSparkline,
+      },
+      {
+        label: 'Pacientes em acompanhamento',
+        value: gspCur,
+        formatType: 'percent',
+        trend: { value: trend(gspCur, gspPrev), positive: true },
+        sparklineData: gspSparkline,
+        benchmark: { value: rawData.engagementBenchmark, label: 'mercado', unit: '%' },
+      },
+      {
+        label: 'Conversas no Período',
+        value: convCur,
+        trend: { value: trend(convCur, convPrev), positive: true },
+        sparklineData: convSparkline,
+      },
+      {
+        label: 'Menções a PA',
+        value: erCur,
+        trend: { value: trend(erCur, erPrev), positive: false },
+        sparklineData: erSparkline,
+      },
+    ];
+
+    cards.forEach(cfg => row.appendChild(createKPICard(cfg)));
+    container.appendChild(row);
   },
 
   // ========== US-05: Mapa de temas conversacionais ==========
@@ -218,14 +286,19 @@ export const SectionPulse = {
       <div class="card__subtitle">Tendencia de engajamento no programa GSP nos ultimos meses</div>
     `;
     header.appendChild(titleDiv);
+    header.appendChild(createIntegrationBadge('Dados de contas médicas requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
 
-    // Toggle for ER overlay
+    // Toggles for overlays
     const toggleDiv = document.createElement('div');
-    toggleDiv.className = 'flex items-center gap-2';
+    toggleDiv.className = 'flex items-center gap-4';
     toggleDiv.innerHTML = `
       <label class="flex items-center gap-2 cursor-pointer text-sm">
         <input type="checkbox" id="toggle-er-overlay" style="accent-color: var(--color-primary-600)">
-        <span>Mostrar uso de PA</span>
+        <span>Uso de PA</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer text-sm">
+        <input type="checkbox" id="toggle-intern-overlay" style="accent-color: var(--color-primary-600)">
+        <span>Internacoes</span>
       </label>
     `;
     header.appendChild(toggleDiv);
@@ -237,8 +310,6 @@ export const SectionPulse = {
     body.innerHTML = '<div id="chart-engagement-evo" class="chart-container"></div>';
     card.appendChild(body);
 
-    // Integration note for ER data
-    card.appendChild(createInfoFooter('Taxa de uso de PA requer integracao com dados de utilizacao do cliente.'));
 
     container.appendChild(card);
 
@@ -265,55 +336,47 @@ export const SectionPulse = {
       },
     }));
 
-    const renderChart = (showER) => {
+    const renderChart = (showER, showIntern) => {
       const series = [{
         name: 'Engajamento GSP (%)',
         type: 'line',
         data: evoData.map(e => e.gspRate),
       }];
+      if (showER) series.push({ name: 'Uso de PA (%)', type: 'line', data: evoData.map(e => e.erRate) });
+      if (showIntern) series.push({ name: 'Internacoes (%)', type: 'line', data: evoData.map(e => e.internacoes) });
 
-      if (showER) {
-        series.push({
-          name: 'Uso de PA (%)',
-          type: 'line',
-          data: evoData.map(e => e.erRate),
-        });
-      }
+      const extraYaxis = (showER || showIntern) ? [{
+        opposite: true,
+        labels: { formatter: (val) => `${val}%` },
+      }] : [];
 
       createChart('chart-engagement-evo', {
         chart: { type: 'line', height: 340 },
         series,
         xaxis: { categories: months },
         yaxis: [
-          {
-            title: { text: 'Engajamento GSP (%)' },
-            labels: { formatter: (val) => `${val}%` },
-          },
-          ...(showER ? [{
-            opposite: true,
-            title: { text: 'Uso de PA (%)' },
-            labels: { formatter: (val) => `${val}%` },
-          }] : []),
+          { title: { text: 'Engajamento GSP (%)' }, labels: { formatter: (val) => `${val}%` } },
+          ...extraYaxis,
         ],
-        stroke: { width: [3, 2], dashArray: [0, 5] },
-        colors: [tk.primary, tk.danger],
+        stroke: { width: [3, 2, 2], dashArray: [0, 5, 8] },
+        colors: [tk.primary, tk.danger, tk.warning],
         markers: { size: 4 },
-        annotations: {
-          xaxis: campaignAnnotations,
-        },
-        tooltip: {
-          y: { formatter: (val) => `${fmt.decimal.format(val)}%` },
-        },
+        annotations: { xaxis: campaignAnnotations },
+        tooltip: { y: { formatter: (val) => `${fmt.decimal.format(val)}%` } },
         legend: { position: 'top' },
       });
     };
 
     requestAnimationFrame(() => {
-      renderChart(false);
+      renderChart(false, false);
 
-      card.querySelector('#toggle-er-overlay').addEventListener('change', (e) => {
-        renderChart(e.target.checked);
-      });
+      const rerender = () => {
+        const showER = card.querySelector('#toggle-er-overlay').checked;
+        const showIntern = card.querySelector('#toggle-intern-overlay').checked;
+        renderChart(showER, showIntern);
+      };
+      card.querySelector('#toggle-er-overlay').addEventListener('change', rerender);
+      card.querySelector('#toggle-intern-overlay').addEventListener('change', rerender);
     });
   },
 
@@ -331,7 +394,21 @@ export const SectionPulse = {
       <div class="card__subtitle">Correlacao entre volume de interacoes em temas de risco e uso de pronto atendimento</div>
     `;
     header.appendChild(titleDiv);
-    header.appendChild(createIntegrationBadge('Uso de PA requer cruzamento com dados de utilizacao do cliente.'));
+    header.appendChild(createIntegrationBadge('Uso de PA requer cruzamento com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
+
+    const riskToggleDiv = document.createElement('div');
+    riskToggleDiv.className = 'flex items-center gap-4';
+    riskToggleDiv.innerHTML = `
+      <label class="flex items-center gap-2 cursor-pointer text-sm">
+        <input type="checkbox" id="toggle-risk-er" checked style="accent-color: var(--color-primary-600)">
+        <span>Uso de PA</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer text-sm">
+        <input type="checkbox" id="toggle-risk-intern" style="accent-color: var(--color-primary-600)">
+        <span>Internacoes</span>
+      </label>
+    `;
+    header.appendChild(riskToggleDiv);
 
     card.appendChild(header);
 
@@ -368,58 +445,51 @@ export const SectionPulse = {
       .filter(d => data._months.includes(d.month));
     const months = riskData.map(d => MONTH_LABELS[d.month] || d.month);
 
-    requestAnimationFrame(() => {
+    const renderRiskChart = (showER, showIntern) => {
+      const series = [{
+        name: 'Interacoes em temas de risco',
+        type: 'area',
+        data: riskData.map(d => d.interactions),
+      }];
+      if (showER) series.push({ name: 'Uso de PA (visitas)', type: 'line', data: riskData.map(d => d.erUsage) });
+      if (showIntern) series.push({ name: 'Internacoes', type: 'line', data: riskData.map(d => d.hospitalizations) });
+
+      const hasOverlay = showER || showIntern;
       createChart('chart-risk-themes-ts', {
         chart: { type: 'line', height: 320 },
-        series: [
-          {
-            name: 'Interacoes em temas de risco',
-            type: 'area',
-            data: riskData.map(d => d.interactions),
-          },
-          {
-            name: 'Uso de PA (visitas)',
-            type: 'line',
-            data: riskData.map(d => d.erUsage),
-          },
-        ],
+        series,
         xaxis: { categories: months },
         yaxis: [
-          {
-            title: { text: 'Interacoes' },
-            labels: { formatter: (val) => fmt.number.format(val) },
-          },
-          {
-            opposite: true,
-            title: { text: 'Uso de PA' },
-            labels: { formatter: (val) => fmt.number.format(val) },
-          },
+          { title: { text: 'Interacoes' }, labels: { formatter: (val) => fmt.number.format(val) } },
+          ...(hasOverlay ? [{ opposite: true, labels: { formatter: (val) => fmt.number.format(val) } }] : []),
         ],
-        stroke: { width: [2, 3], curve: 'smooth' },
+        stroke: { width: [2, 3, 3], curve: 'smooth' },
         fill: {
-          type: ['gradient', 'solid'],
-          gradient: {
-            shadeIntensity: 1,
-            opacityFrom: 0.35,
-            opacityTo: 0.05,
-          },
+          type: ['gradient', 'solid', 'solid'],
+          gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05 },
         },
-        colors: [tk.purple, tk.danger],
-        markers: { size: [0, 5] },
-        annotations: {
-          xaxis: annotationMarkers,
-        },
-        tooltip: {
-          shared: true,
-          intersect: false,
-          y: { formatter: (val) => fmt.number.format(val) },
-        },
+        colors: [tk.purple, tk.danger, tk.warning],
+        markers: { size: [0, 5, 5] },
+        annotations: { xaxis: annotationMarkers },
+        tooltip: { shared: true, intersect: false, y: { formatter: (val) => fmt.number.format(val) } },
         legend: { position: 'top' },
       });
+    };
+
+    requestAnimationFrame(() => {
+      renderRiskChart(true, false);
+
+      const rerenderRisk = () => {
+        const showER = card.querySelector('#toggle-risk-er').checked;
+        const showIntern = card.querySelector('#toggle-risk-intern').checked;
+        renderRiskChart(showER, showIntern);
+      };
+      card.querySelector('#toggle-risk-er').addEventListener('change', rerenderRisk);
+      card.querySelector('#toggle-risk-intern').addEventListener('change', rerenderRisk);
     });
   },
 
-  // ========== US-08: Loop do PA (funil) ==========
+  // ========== US-08: Loop do PA (bar chart) ==========
   _renderERLoop(data, rawData) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -436,65 +506,56 @@ export const SectionPulse = {
       <div class="card__subtitle">Funil de interceptacao de visitas ao Pronto Atendimento</div>
     `;
     header.appendChild(titleDiv);
-    header.appendChild(createIntegrationBadge(erLoop.integrationNote));
+    header.appendChild(createIntegrationBadge(erLoop.integrationNote, 'Última atualização de contas médicas em 28/02'));
 
     card.appendChild(header);
 
-    // --- Body with CSS funnel ---
-    const body = document.createElement('div');
-    body.className = 'card__body';
-
-    // Use the current month's data if filtered to a single month, otherwise aggregate
+    // --- Aggregate values for filtered period ---
     let mentioned = erLoop.mentionedER;
     let intervened = erLoop.nurseIntervened;
     let avoided = erLoop.didNotUseER;
     let savings = erLoop.estimatedSavings;
-    let didNotUseCount = erLoop.didNotUseER;
     const avgCost = erLoop.avgERCost;
 
-    // If we have monthly data and a filtered range, aggregate from that range
     if (erLoop.monthly && data._months.length > 0) {
-      const monthlyEntries = data._months
-        .map(m => erLoop.monthly[m])
-        .filter(Boolean);
-      if (monthlyEntries.length > 0) {
-        mentioned = monthlyEntries.reduce((s, e) => s + e.mentioned, 0);
-        intervened = monthlyEntries.reduce((s, e) => s + e.intervened, 0);
-        avoided = monthlyEntries.reduce((s, e) => s + e.avoided, 0);
-        savings = monthlyEntries.reduce((s, e) => s + e.savings, 0);
-        didNotUseCount = avoided;
+      const entries = data._months.map(m => erLoop.monthly[m]).filter(Boolean);
+      if (entries.length > 0) {
+        mentioned  = entries.reduce((s, e) => s + e.mentioned,  0);
+        intervened = entries.reduce((s, e) => s + e.intervened, 0);
+        avoided    = entries.reduce((s, e) => s + e.avoided,    0);
+        savings    = entries.reduce((s, e) => s + e.savings,    0);
       }
     }
 
-    // Build the funnel component
-    const funnelEl = createFunnel([
-      { label: 'Mencionaram PA', value: mentioned, color: tk.danger },
-      { label: 'Enfermeiro interveio', value: intervened, color: tk.warning },
-      { label: 'Nao utilizaram PA', value: avoided, color: tk.success },
-    ]);
+    // --- Body ---
+    const body = document.createElement('div');
+    body.className = 'card__body';
 
-    body.appendChild(funnelEl);
+    // Funnel: red → yellow → green
+    body.appendChild(createFunnel([
+      { label: 'Mencionaram PA',      value: mentioned,  color: '#EF4444' },
+      { label: 'Enfermeiro interveio', value: intervened, color: '#F59E0B' },
+      { label: 'Nao utilizaram PA',   value: avoided,    color: '#16A34A' },
+    ]));
 
-    // Savings highlight
-    const savingsDiv = document.createElement('div');
-    savingsDiv.className = 'savings-highlight mt-4';
-    savingsDiv.innerHTML = `
-      <div class="savings-highlight__value">${fmt.currency.format(savings)}</div>
-      <div class="savings-highlight__label">economia estimada no periodo</div>
+    // Savings box
+    const savingsBox = document.createElement('div');
+    savingsBox.style.cssText = 'background:var(--success-50,#F0FDF4);border-radius:8px;padding:var(--space-4);margin-top:var(--space-4);';
+    savingsBox.innerHTML = `
+      <span style="font-size:1.4rem;font-weight:700;color:var(--success-700,#15803D)">${fmt.currency.format(savings)}</span>
+      <span style="color:var(--success-600,#16A34A);font-size:0.875rem;margin-left:var(--space-2)">economia estimada no periodo</span>
     `;
-    body.appendChild(savingsDiv);
+    body.appendChild(savingsBox);
 
-    // Calculation breakdown
-    const breakdownDiv = document.createElement('div');
-    breakdownDiv.className = 'mt-3 flex items-center gap-3 text-xs text-secondary';
-    breakdownDiv.innerHTML = `
-      <span>${fmt.number.format(didNotUseCount)} pacientes &times; ${fmt.currency.format(avgCost)} custo medio PA</span>
-    `;
-    body.appendChild(breakdownDiv);
+    // Breakdown line
+    const breakdown = document.createElement('div');
+    breakdown.style.cssText = 'color:var(--muted-foreground);font-size:0.8rem;margin-top:var(--space-2)';
+    breakdown.textContent = `${fmt.number.format(avoided)} pacientes × ${fmt.currency.format(avgCost)} custo medio PA`;
+    body.appendChild(breakdown);
 
     card.appendChild(body);
 
-    // Methodology expandable
+    // Methodology link (expandable)
     card.appendChild(createExpandable({
       triggerText: 'Ver metodologia do calculo',
       content: erLoop.methodology,

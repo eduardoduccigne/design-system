@@ -2,7 +2,6 @@
 import { createChart, destroyChart } from '../components/chart-factory.js';
 import { createDataTable } from '../components/data-table.js';
 import { createIntegrationBadge, createStatusBadge } from '../components/badge.js';
-import { createIntegrationMarker } from '../components/integration-marker.js';
 import { createExpandable } from '../components/tooltip.js';
 import { QUADRANT_LABELS, QUADRANT_COLORS } from '../data/quadrants.js';
 import { fmt, MONTH_LABELS, tk } from '../app.js';
@@ -136,8 +135,10 @@ export const SectionEffectiveness = {
           <div class="card__title">Sinistralidade x Acompanhamento</div>
           <div class="card__subtitle">Correlacao entre interacoes de risco e uso de pronto-atendimento ao longo do tempo</div>
         </div>
+        <div id="sinistralidade-badge"></div>
       </div>
       <div class="card__body">
+        <div id="sinistralidade-legend" class="flex gap-4 mb-3 text-sm"></div>
         <div id="chart-claims-followup" class="chart-container chart-container--lg"></div>
       </div>
     `;
@@ -158,6 +159,11 @@ export const SectionEffectiveness = {
             type: 'line',
             data: riskData.map(d => d.erUsage),
           },
+          {
+            name: 'Internacoes',
+            type: 'line',
+            data: riskData.map(d => d.hospitalizations ?? null),
+          },
         ],
         xaxis: { categories: riskData.map(d => MONTH_LABELS[d.month] || d.month) },
         yaxis: [
@@ -167,24 +173,43 @@ export const SectionEffectiveness = {
           },
           {
             opposite: true,
-            title: { text: 'Uso de PA (visitas)', style: { color: tk.danger } },
+            title: { text: 'Eventos clinicos', style: { color: tk.danger } },
             labels: { formatter: (val) => fmt.number.format(val), style: { colors: tk.danger } },
           },
         ],
-        colors: [tk.primary, tk.danger],
-        stroke: { width: [0, 3], curve: 'smooth' },
+        colors: [tk.primary, tk.danger, tk.warning],
+        stroke: { width: [0, 3, 3], curve: 'smooth' },
         plotOptions: { bar: { columnWidth: '50%', borderRadius: 4 } },
-        markers: { size: [0, 5] },
+        markers: { size: [0, 5, 5] },
         tooltip: {
           shared: true,
           y: { formatter: (val) => fmt.number.format(val) },
         },
-        legend: { position: 'top' },
+        legend: { show: false },
       });
     });
 
-    // Integration marker
-    card.appendChild(createIntegrationMarkerFooter('Dados de sinistralidade requerem integracao com dados de utilizacao do cliente para correlacao precisa.'));
+    requestAnimationFrame(() => {
+      const legendRow = card.querySelector('#sinistralidade-legend');
+      if (legendRow) {
+        const items = [
+          { label: 'Interacoes de risco', color: tk.primary, shape: 'bar' },
+          { label: 'Uso de PA (visitas)', color: tk.danger, shape: 'line' },
+          { label: 'Internacoes', color: tk.warning, shape: 'line' },
+        ];
+        legendRow.innerHTML = items.map(({ label, color, shape }) => {
+          const indicator = shape === 'bar'
+            ? `<span style="width:12px;height:12px;border-radius:2px;background:${color};display:inline-block;flex-shrink:0"></span>`
+            : `<span style="display:inline-flex;align-items:center;gap:2px;flex-shrink:0"><span style="width:12px;height:2px;background:${color};display:inline-block"></span><span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block"></span><span style="width:12px;height:2px;background:${color};display:inline-block"></span></span>`;
+          return `<span style="display:inline-flex;align-items:center;gap:6px;color:var(--muted-foreground)">${indicator}<span>${label}</span></span>`;
+        }).join('');
+      }
+    });
+
+    requestAnimationFrame(() => {
+      const badgeSlot = card.querySelector('#sinistralidade-badge');
+      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de sinistralidade requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
+    });
 
     return card;
   },
@@ -205,10 +230,9 @@ export const SectionEffectiveness = {
       <div class="card__body"></div>
     `;
 
-    // Add integration marker to header
     requestAnimationFrame(() => {
       const markerContainer = card.querySelector('#integration-cost-marker');
-      markerContainer.appendChild(createIntegrationMarker('Dados de custo requerem integracao'));
+      markerContainer.appendChild(createIntegrationBadge('Dados de custo assistencial requerem integracao com dados do cliente.', 'Última atualização de contas médicas em 28/02'));
     });
 
     const beneficiaries = rawData.topBeneficiariesByCost || [];

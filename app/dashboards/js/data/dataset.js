@@ -201,12 +201,12 @@ export const DASHBOARD_DATA = {
   // ========== US-06: Evolucao mensal do engajamento ==========
   // [REAL] taxa GSP viria do backend; taxa PA requer integracao
   engagementEvolution: [
-    { month: '2024-10', gspRate: 6.8, erRate: 3.2, gspActive: 815 },
-    { month: '2024-11', gspRate: 7.1, erRate: 3.0, gspActive: 852 },
-    { month: '2024-12', gspRate: 7.4, erRate: 2.8, gspActive: 890 },
-    { month: '2025-01', gspRate: 8.2, erRate: 2.5, gspActive: 980 },
-    { month: '2025-02', gspRate: 8.5, erRate: 2.3, gspActive: 1020 },
-    { month: '2025-03', gspRate: 9.0, erRate: 2.1, gspActive: 1085 },
+    { month: '2024-10', gspRate: 6.8, erRate: 3.2, internacoes: 1.8, gspActive: 815 },
+    { month: '2024-11', gspRate: 7.1, erRate: 3.0, internacoes: 1.6, gspActive: 852 },
+    { month: '2024-12', gspRate: 7.4, erRate: 2.8, internacoes: 1.4, gspActive: 890 },
+    { month: '2025-01', gspRate: 8.2, erRate: 2.5, internacoes: 1.2, gspActive: 980 },
+    { month: '2025-02', gspRate: 8.5, erRate: 2.3, internacoes: 0.9, gspActive: 1020 },
+    { month: '2025-03', gspRate: 9.0, erRate: 2.1, internacoes: 0.7, gspActive: 1085 },
   ],
 
   // Por empresa
@@ -406,12 +406,12 @@ export const DASHBOARD_DATA = {
     ],
     // Dual-axis: interacoes de pacientes com temas de risco vs uso de PA
     riskThemes: [
-      { month: '2024-10', interactions: 85, erUsage: 42 },
-      { month: '2024-11', interactions: 102, erUsage: 38 },
-      { month: '2024-12', interactions: 118, erUsage: 35 },
-      { month: '2025-01', interactions: 145, erUsage: 30 },
-      { month: '2025-02', interactions: 172, erUsage: 25 },
-      { month: '2025-03', interactions: 198, erUsage: 21 },
+      { month: '2024-10', interactions: 85, erUsage: 42, hospitalizations: 18 },
+      { month: '2024-11', interactions: 102, erUsage: 38, hospitalizations: 16 },
+      { month: '2024-12', interactions: 118, erUsage: 35, hospitalizations: 14 },
+      { month: '2025-01', interactions: 145, erUsage: 30, hospitalizations: 12 },
+      { month: '2025-02', interactions: 172, erUsage: 25, hospitalizations: 9 },
+      { month: '2025-03', interactions: 198, erUsage: 21, hospitalizations: 7 },
     ],
     providerComplaints: [
       { month: '2024-10', value: 68 }, { month: '2024-11', value: 72 },
@@ -551,5 +551,141 @@ export const DASHBOARD_DATA = {
     { provider: 'Centro Medico Esperanca', positiveRefs: 45, topics: ['Atendimento humanizado', 'Pontualidade'], trend: 'improving' },
     { provider: 'Hospital Sao Lucas', positiveRefs: 38, topics: ['Infraestrutura', 'Equipe qualificada'], trend: 'stable' },
     { provider: 'Rede Odonto Sorriso', positiveRefs: 32, topics: ['Agendamento facil', 'Custo-beneficio'], trend: 'improving' },
+  ],
+
+  // ========== Evolucao da Sinistralidade ==========
+  sinistralidadeEvolucao: {
+    breakeven: 70,
+    months: [
+      { month: '2021-06', label: 'jun./21', sinistro: 870000, premio: 665000, taxa: 130.11 },
+      { month: '2021-07', label: 'jul./21', sinistro: 625000, premio: 663000, taxa: 94.21  },
+      { month: '2021-08', label: 'ago./21', sinistro: 445000, premio: 688000, taxa: 64.67  },
+      { month: '2021-09', label: 'set./21', sinistro: 578000, premio: 723000, taxa: 80.00  },
+      { month: '2021-10', label: 'out./21', sinistro: 555000, premio: 691000, taxa: 80.36  },
+      { month: '2021-11', label: 'nov./21', sinistro: 670000, premio: 1464000, taxa: 45.74 },
+      { month: '2021-12', label: 'dez./21', sinistro: 635000, premio: 826000, taxa: 76.93  },
+      { month: '2022-01', label: 'jan./22', sinistro: 575000, premio: 856000, taxa: 67.20  },
+      { month: '2022-02', label: 'fev./22', sinistro: 620000, premio: 951000, taxa: 65.19  },
+      { month: '2022-03', label: 'mar./22', sinistro: 635000, premio: 879000, taxa: 72.20  },
+      { month: '2022-04', label: 'abr./22', sinistro: 650000, premio: 949000, taxa: 68.52  },
+      { month: '2022-05', label: 'mai./22', sinistro: 685000, premio: 1052000, taxa: 80.41 },
+    ],
+  },
+
+  // ========== Indice por capita ==========
+  indicePerCapita: [
+    { classification: 'Consulta',      atual: 5.31,  benchmark: 3.50  },
+    { classification: 'Exame',          atual: 34.37, benchmark: 13.89 },
+    { classification: 'Internacao',     atual: 2.01,  benchmark: 0.18  },
+    { classification: 'Pronto Socorro', atual: 2.17,  benchmark: 1.14  },
+  ],
+
+  // ========== Custos por tipo de utilizacao e utilizacao do plano ==========
+  planUtilizationStats: {
+    costsByType: {
+      rede: 78.7,
+      reembolso: 12.3,
+      benchmark: 'Reembolso esperado: 10-12%',
+    },
+    planUsedLast12Months: {
+      sim: 84.14,
+      nao: 15.86,
+      benchmark: 'Benchmark esperado: Sim: 80 a 85% | Nao: 15 a 20%',
+    },
+  },
+
+  // ========== Top beneficiarios por custo estimado (por empresa) ==========
+  topCostBeneficiaries: {
+    emp1: [
+      { name: 'Joao M.', age: 62, condition: 'Doenca coronariana', estimatedCost: 18500, riskLevel: 'critical' },
+      { name: 'Maria F.', age: 58, condition: 'Diabetes tipo 2 + Hipertensao', estimatedCost: 15200, riskLevel: 'high' },
+      { name: 'Carlos R.', age: 71, condition: 'Insuficiencia renal cronica', estimatedCost: 12800, riskLevel: 'critical' },
+      { name: 'Ana P.', age: 45, condition: 'Cancer em tratamento', estimatedCost: 11400, riskLevel: 'high' },
+      { name: 'Paulo S.', age: 55, condition: 'DPOC + Tabagismo', estimatedCost: 9600, riskLevel: 'high' },
+    ],
+    emp2: [
+      { name: 'Regina O.', age: 67, condition: 'Insuficiencia cardiaca congestiva', estimatedCost: 22100, riskLevel: 'critical' },
+      { name: 'Marcos T.', age: 53, condition: 'Diabetes + Nefropatia', estimatedCost: 17400, riskLevel: 'critical' },
+      { name: 'Lucia B.', age: 61, condition: 'Doenca pulmonar obstrutiva', estimatedCost: 13900, riskLevel: 'high' },
+      { name: 'Fernando N.', age: 48, condition: 'Lesao ortopedica + Cirurgia', estimatedCost: 10200, riskLevel: 'medium' },
+      { name: 'Claudia M.', age: 59, condition: 'Artrite reumatoide', estimatedCost: 8900, riskLevel: 'medium' },
+    ],
+    emp3: [
+      { name: 'Sebastiao A.', age: 70, condition: 'Doenca coronariana + Marca-passo', estimatedCost: 19800, riskLevel: 'critical' },
+      { name: 'Vera C.', age: 64, condition: 'Neoplasia maligna', estimatedCost: 16500, riskLevel: 'critical' },
+      { name: 'Renato G.', age: 57, condition: 'Acidente vascular cerebral', estimatedCost: 14100, riskLevel: 'high' },
+      { name: 'Helena S.', age: 52, condition: 'Esclerose multipla', estimatedCost: 12300, riskLevel: 'high' },
+      { name: 'Gilberto F.', age: 66, condition: 'Insuficiencia renal + Dialise', estimatedCost: 11700, riskLevel: 'critical' },
+    ],
+  },
+
+  // ========== ROI do Programa Nilo ==========
+  programROI: {
+    avoidedER: {
+      count: 71,
+      avgCost: 850,
+      savings: 60350,
+    },
+    avoidedHospitalizations: {
+      count: 12,
+      avgCost: 8500,
+      savings: 102000,
+    },
+    totalSavings: 162350,
+  },
+
+  // ========== Benchmark de Engajamento GSP ==========
+  engagementBenchmark: 7.5,
+
+  // ========== NPS trend (para Resumo Executivo) ==========
+  npsTrend: 5.0,
+
+  // ========== Top 5 prestadores acima da mediana por custo ==========
+  providerCostAboveMedian: [
+    {
+      id: 'pr09', name: 'Hospital Santa Clara', specialty: 'Multiclinica', aboveMedianPct: 42.3,
+      costs: [
+        { classification: 'Consulta',      atual: 144.24,   benchmark: 92.06   },
+        { classification: 'Exame',          atual: 54.11,    benchmark: 43.18   },
+        { classification: 'Internacao',     atual: 10099.89, benchmark: 10654.02 },
+        { classification: 'Pronto Socorro', atual: 288.33,   benchmark: 250.49  },
+      ],
+    },
+    {
+      id: 'pr11', name: 'Clinica OrthoVida', specialty: 'Ortopedia', aboveMedianPct: 38.1,
+      costs: [
+        { classification: 'Consulta',      atual: 128.50,  benchmark: 92.06  },
+        { classification: 'Exame',          atual: 61.80,   benchmark: 43.18  },
+        { classification: 'Internacao',     atual: 8940.00, benchmark: 8200.00 },
+        { classification: 'Pronto Socorro', atual: 312.40,  benchmark: 250.49 },
+      ],
+    },
+    {
+      id: 'pr10', name: 'Clinica Vida Plena', specialty: 'Clinica Geral', aboveMedianPct: 31.7,
+      costs: [
+        { classification: 'Consulta',      atual: 118.90,  benchmark: 92.06  },
+        { classification: 'Exame',          atual: 57.40,   benchmark: 43.18  },
+        { classification: 'Internacao',     atual: 9350.00, benchmark: 8200.00 },
+        { classification: 'Pronto Socorro', atual: 271.60,  benchmark: 250.49 },
+      ],
+    },
+    {
+      id: 'pr08', name: 'Rede CardioPulse', specialty: 'Cardiologia', aboveMedianPct: 24.5,
+      costs: [
+        { classification: 'Consulta',      atual: 210.00,  benchmark: 92.06  },
+        { classification: 'Exame',          atual: 89.50,   benchmark: 43.18  },
+        { classification: 'Internacao',     atual: 11200.00, benchmark: 10654.02 },
+        { classification: 'Pronto Socorro', atual: 260.00,  benchmark: 250.49 },
+      ],
+    },
+    {
+      id: 'pr06', name: 'Clinica Bem-Estar', specialty: 'Ortopedia', aboveMedianPct: 18.2,
+      costs: [
+        { classification: 'Consulta',      atual: 105.30,  benchmark: 92.06  },
+        { classification: 'Exame',          atual: 48.70,   benchmark: 43.18  },
+        { classification: 'Internacao',     atual: 8650.00, benchmark: 8200.00 },
+        { classification: 'Pronto Socorro', atual: 258.90,  benchmark: 250.49 },
+      ],
+    },
   ],
 };

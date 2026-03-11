@@ -28,6 +28,9 @@ export const SectionProviders = {
 
     // Provider Rankings table
     container.appendChild(this._renderFullRanking(rawData));
+
+    // Top 5 prestadores acima da mediana de custo
+    container.appendChild(this._renderCostAboveMedian(rawData));
   },
 
   // ========== US-17: Tabela de Reclamacoes de Prestadores ==========
@@ -76,14 +79,6 @@ export const SectionProviders = {
           },
         },
         {
-          key: 'growthRate', label: 'Variacao', align: 'center',
-          render: (val) => {
-            const color = val > 0 ? 'var(--destructive-500)' : val < 0 ? 'var(--success-500)' : 'var(--muted-foreground)';
-            const prefix = val > 0 ? '+' : '';
-            return `<span style="color:${color};font-weight:600">${prefix}${fmt.decimal.format(val)}%</span>`;
-          },
-        },
-        {
           key: 'topIssues', label: 'Principais Problemas',
           render: (val) => {
             const issues = val || [];
@@ -94,11 +89,6 @@ export const SectionProviders = {
         },
       ],
       rows: providers,
-      highlightCondition: (row) => {
-        if (row.trend === 'worsening' && row.growthRate > 30) return 'danger';
-        if (row.trend === 'worsening') return 'warning';
-        return null;
-      },
     });
 
     card.querySelector('.card__body').appendChild(table);
@@ -138,7 +128,7 @@ export const SectionProviders = {
             <span style="color:var(--success-500);font-weight:600">${p.positiveRefs || p.positiveReferences || p.mentions || 0} referencias positivas</span>
           </div>
           <div class="flex gap-2 flex-wrap mt-1">
-            ${(p.topics || p.topStrengths || []).map(t => `<span class="badge badge--success">${t}</span>`).join('')}
+            ${(p.topics || p.topStrengths || []).map(t => `<span class="badge badge--neutral" style="font-size:11px">${t}</span>`).join('')}
           </div>
         `;
         bodyGood.appendChild(item);
@@ -178,7 +168,7 @@ export const SectionProviders = {
             <span style="color:var(--destructive-500);font-weight:600">${fmt.decimal.format(p.complaintRate)}% reclamacoes</span>
           </div>
           <div class="flex gap-2 flex-wrap mt-1">
-            ${(p.topIssues || []).map(issue => `<span class="badge badge--danger">${issue}</span>`).join('')}
+            ${(p.topIssues || []).map(issue => `<span class="badge badge--neutral" style="font-size:11px">${issue}</span>`).join('')}
           </div>
         `;
         bodyBad.appendChild(item);
@@ -234,14 +224,7 @@ export const SectionProviders = {
         },
         {
           key: 'complaintRate', label: 'Taxa Reclamacao', align: 'center',
-          render: (val) => {
-            const color = val > 10 ? 'var(--destructive-500)' : val > 5 ? 'var(--warning-500)' : 'var(--muted-foreground)';
-            return `<span style="color:${color};font-weight:600">${fmt.decimal.format(val)}%</span>`;
-          },
-        },
-        {
-          key: 'resolutionRate', label: 'Taxa Resolucao', align: 'center',
-          render: (val) => `<span class="font-semibold">${val}%</span>`,
+          render: (val) => `<span style="color:var(--muted-foreground);font-weight:600">${fmt.decimal.format(val)}%</span>`,
         },
         {
           key: 'trend', label: 'Tendencia',
@@ -270,6 +253,101 @@ export const SectionProviders = {
     });
 
     card.querySelector('.card__body').appendChild(table);
+
+    return card;
+  },
+
+  // ========== Top 5 Prestadores Acima da Mediana de Custo ==========
+  _renderCostAboveMedian(rawData) {
+    const card = document.createElement('div');
+    card.className = 'card card--full mt-6';
+
+    card.innerHTML = `
+      <div class="card__header">
+        <div>
+          <div class="card__title">Top 5 Prestadores Acima da Mediana de Custo</div>
+          <div class="card__subtitle">Custo medio por classificacao vs. benchmark de mercado</div>
+        </div>
+      </div>
+      <div class="card__body" id="cost-above-median-body"></div>
+    `;
+
+    const providers = rawData.providerCostAboveMedian || [];
+
+    requestAnimationFrame(() => {
+      const body = card.querySelector('#cost-above-median-body');
+      if (!body) return;
+
+      providers.forEach((provider, providerIdx) => {
+        const section = document.createElement('div');
+        if (providerIdx > 0) section.style.marginTop = 'var(--space-2)';
+
+        // Collapsible header row
+        const trigger = document.createElement('button');
+        trigger.style.cssText = [
+          'width:100%;display:flex;align-items:center;gap:var(--space-3)',
+          'padding:var(--space-3) var(--space-4)',
+          'background:var(--muted);border:none;border-radius:var(--radius-md)',
+          'cursor:pointer;text-align:left;transition:background var(--transition-fast)',
+        ].join(';');
+        trigger.innerHTML = `
+          <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+            style="flex-shrink:0;transition:transform 0.2s ease">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <span style="font-weight:700;font-size:var(--font-size-sm);color:var(--foreground);flex:1">${provider.name}</span>
+          <span style="color:var(--muted-foreground);font-size:var(--font-size-xs)">${provider.specialty}</span>
+          <span style="background:var(--destructive);color:#fff;font-size:var(--font-size-xs);font-weight:700;padding:2px 10px;border-radius:999px;flex-shrink:0">
+            +${fmt.decimal.format(provider.aboveMedianPct)}% acima da mediana
+          </span>
+        `;
+        trigger.addEventListener('mouseover', () => trigger.style.background = 'var(--accent)');
+        trigger.addEventListener('mouseout', () => trigger.style.background = 'var(--muted)');
+
+        // Collapsible detail (cost table)
+        const detail = document.createElement('div');
+        detail.style.cssText = 'overflow:hidden;max-height:0;transition:max-height 0.25s ease';
+
+        const table = document.createElement('table');
+        table.style.cssText = 'width:100%;border-collapse:collapse;margin-top:var(--space-2)';
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th style="text-align:left;font-size:var(--font-size-xs);font-weight:600;color:var(--muted-foreground);padding:0 var(--space-3) var(--space-2);text-transform:uppercase;letter-spacing:0.05em">Classificacao</th>
+              <th style="text-align:left;font-size:var(--font-size-xs);font-weight:600;color:var(--muted-foreground);padding:0 var(--space-3) var(--space-2);text-transform:uppercase;letter-spacing:0.05em">Atual</th>
+              <th style="text-align:left;font-size:var(--font-size-xs);font-weight:600;color:var(--muted-foreground);padding:0 var(--space-3) var(--space-2);text-transform:uppercase;letter-spacing:0.05em">Benchmark</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${provider.costs.map((row, i) => {
+              const isAbove = row.atual > row.benchmark;
+              const bg = i % 2 === 0 ? 'var(--muted)' : 'transparent';
+              return `
+                <tr>
+                  <td style="padding:var(--space-3);background:${bg};border-radius:${i % 2 === 0 ? 'var(--radius-lg) 0 0 var(--radius-lg)' : '0'};font-weight:700;color:var(--foreground)">${row.classification}</td>
+                  <td style="padding:var(--space-3);background:${bg};color:${isAbove ? 'var(--destructive)' : 'var(--success)'};font-weight:${isAbove ? '600' : '400'}">${fmt.currency.format(row.atual)}</td>
+                  <td style="padding:var(--space-3);background:${bg};border-radius:${i % 2 === 0 ? '0 var(--radius-lg) var(--radius-lg) 0' : '0'};color:var(--muted-foreground)">${fmt.currency.format(row.benchmark)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        `;
+        detail.appendChild(table);
+
+        let isOpen = false;
+        trigger.addEventListener('click', () => {
+          isOpen = !isOpen;
+          detail.style.maxHeight = isOpen ? '600px' : '0px';
+          const chevron = trigger.querySelector('.collapse-chevron');
+          if (chevron) chevron.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+        });
+
+        section.appendChild(trigger);
+        section.appendChild(detail);
+        body.appendChild(section);
+      });
+    });
 
     return card;
   },

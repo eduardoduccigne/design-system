@@ -9,6 +9,7 @@ export const AIPanel = {
   _suggestionsEl: null,
   _isOpen: false,
   _currentContext: null,
+  _conversationHistory: [], // tracks user/assistant turns for multi-turn context
 
   /** Create the panel DOM and append to body. Called once at app init. */
   init() {
@@ -25,6 +26,7 @@ export const AIPanel = {
   /** Open the panel with brief context metrics. */
   open(briefContext) {
     this._messagesEl.innerHTML = '';
+    this._conversationHistory = [];
     this._currentContext = briefContext;
 
     // Build system message from brief context
@@ -57,6 +59,7 @@ export const AIPanel = {
   /** Open the panel with section-specific context. */
   openWithSection(sectionId, sectionContext) {
     this._messagesEl.innerHTML = '';
+    this._conversationHistory = [];
     this._currentContext = { sectionId, ...sectionContext };
 
     const sectionNames = {
@@ -187,8 +190,8 @@ export const AIPanel = {
     });
   },
 
-  /** Handle sending a message. */
-  _handleSend() {
+  /** Handle sending a message — streams from Claude API. */
+  async _handleSend() {
     const text = this._inputEl.value.trim();
     if (!text) return;
 
@@ -196,18 +199,112 @@ export const AIPanel = {
     this._inputEl.value = '';
     this._sendBtn.disabled = true;
 
-    // Hide suggestions after first user message
-    if (this._suggestionsEl) {
-      this._suggestionsEl.innerHTML = '';
+    if (this._suggestionsEl) this._suggestionsEl.innerHTML = '';
+
+    // Add user turn to history
+    this._conversationHistory.push({ role: 'user', content: text });
+
+    // Create streaming AI message bubble
+    const { msgEl, contentEl } = this._addStreamingMessage();
+
+    let fullText = '';
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: this._conversationHistory,
+          context: this._currentContext,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep incomplete line
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]' || !data) continue;
+
+          try {
+            const event = JSON.parse(data);
+            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              fullText += event.delta.text;
+              contentEl.textContent = fullText;
+              this._messagesEl.scrollTop = this._messagesEl.scrollHeight;
+            }
+          } catch { /* skip malformed SSE events */ }
+        }
+      }
+
+      // Finalize: apply markdown formatting to the complete response
+      this._finalizeStreamingMessage(contentEl, fullText);
+
+      // Add assistant turn to history
+      this._conversationHistory.push({ role: 'assistant', content: fullText });
+
+    } catch (err) {
+      const needsProxy = err.message.includes('fetch') || err.message.includes('Failed') || err.message.includes('404');
+      contentEl.textContent = needsProxy
+        ? 'O painel de IA requer o servidor proxy. Abra um terminal na pasta do dashboard e execute:\n\nANTHROPIC_API_KEY=sua-chave node server.js\n\nDepois acesse: http://localhost:3456'
+        : `Erro: ${err.message}`;
+      msgEl.style.opacity = '0.7';
     }
 
-    // Mock AI response after delay
-    setTimeout(() => {
-      this._addMessage(
-        'Esta funcionalidade esta em desenvolvimento. Em breve, a IA podera analisar seus dados e responder suas perguntas em tempo real.',
-        'system'
-      );
-    }, 800);
+    this._sendBtn.disabled = false;
+    requestAnimationFrame(() => this._inputEl.focus());
+  },
+
+  /** Add an empty AI message bubble for streaming into. Returns { msgEl, contentEl }. */
+  _addStreamingMessage() {
+    const msg = document.createElement('div');
+    msg.className = 'ai-panel__message ai-panel__message--system';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'ai-panel__message-avatar';
+    avatar.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>';
+
+    const content = document.createElement('div');
+    content.className = 'ai-panel__message-content';
+    content.style.cssText = 'white-space:pre-wrap;min-height:1.2em';
+
+    msg.appendChild(avatar);
+    msg.appendChild(content);
+    this._messagesEl.appendChild(msg);
+    this._messagesEl.scrollTop = this._messagesEl.scrollHeight;
+
+    return { msgEl: msg, contentEl: content };
+  },
+
+  /** Apply markdown rendering to the finished streamed message. */
+  _finalizeStreamingMessage(contentEl, text) {
+    contentEl.style.whiteSpace = '';
+    let html = text
+      .split('\n')
+      .map(line => {
+        if (line.startsWith('- ')) return `<li>${line.slice(2)}</li>`;
+        if (line.trim() === '') return '';
+        return `<p>${line}</p>`;
+      })
+      .join('');
+    html = html.replace(/(<li>[\s\S]*?<\/li>)+/g, match => `<ul>${match}</ul>`);
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    contentEl.innerHTML = html;
+    this._messagesEl.scrollTop = this._messagesEl.scrollHeight;
   },
 
   /** Build the full panel DOM structure. */
@@ -285,7 +382,7 @@ export const AIPanel = {
     // --- Disclaimer ---
     const disclaimer = document.createElement('div');
     disclaimer.className = 'ai-panel__disclaimer';
-    disclaimer.textContent = 'Funcionalidade em desenvolvimento. Em breve, a IA analisara seus dados em tempo real.';
+    disclaimer.textContent = 'Respostas geradas por IA com base nos dados do painel. Verifique informacoes criticas.';
     this._panelEl.appendChild(disclaimer);
   },
 

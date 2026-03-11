@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/utilities.css?v=1">
   <link rel="stylesheet" href="css/morning-brief.css?v=1">
   <link rel="stylesheet" href="css/ai-panel.css?v=1">
+  <link rel="stylesheet" href="css/delegar-modal.css?v=1">
 </head>
 <body>
   <div class="app-layout">
@@ -71,6 +72,25 @@
         </a>
       </nav>
 
+      <div class="sidebar-sources">
+        <div class="sidebar-sources__label">Fontes de dados</div>
+        <div class="sidebar-sources__item">
+          <span class="sidebar-sources__dot sidebar-sources__dot--live"></span>
+          <span class="sidebar-sources__name">Nilo usage data</span>
+          <span class="sidebar-sources__freq">ao vivo</span>
+        </div>
+        <div class="sidebar-sources__item">
+          <span class="sidebar-sources__dot sidebar-sources__dot--file"></span>
+          <span class="sidebar-sources__name">Contas m&eacute;dicas</span>
+          <span class="sidebar-sources__freq">mensal</span>
+        </div>
+        <div class="sidebar-sources__item">
+          <span class="sidebar-sources__dot sidebar-sources__dot--file"></span>
+          <span class="sidebar-sources__name">NIP</span>
+          <span class="sidebar-sources__freq">semanal</span>
+        </div>
+      </div>
+
       <div class="sidebar-footer">
         <div class="sidebar-footer__operator">Sa&uacute;de Exemplo S/A</div>
         <div class="sidebar-footer__period" id="sidebar-period">Jan &ndash; Mar 2025</div>
@@ -86,9 +106,6 @@
         <h1 class="topbar__title">Relat&oacute;rio de Gest&atilde;o Cl&iacute;nica</h1>
         <div id="filter-bar" class="topbar__filters"></div>
       </header>
-
-      <!-- Morning Brief -->
-      <div id="morning-brief" class="morning-brief"></div>
 
       <!-- Dashboard Sections -->
       <main class="main-content">

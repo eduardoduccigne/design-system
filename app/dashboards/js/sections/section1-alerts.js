@@ -1,10 +1,10 @@
 // ========== Section 1 — Alertas e Oportunidades (US-01 a US-04) ==========
 import { createDataTable } from '../components/data-table.js';
-import { createIntegrationBadge, createRiskDot, createTrendBadge, createStatusBadge } from '../components/badge.js';
+import { DelegarModal } from '../components/delegar-modal.js';
+import { createIntegrationBadge } from '../components/badge.js';
 import { createQuadrantMatrix } from '../components/quadrant-matrix.js';
-import { createIntegrationMarker } from '../components/integration-marker.js';
-import { fmt, MONTH_LABELS } from '../app.js';
 import { QUADRANT_LABELS, QUADRANT_COLORS } from '../data/quadrants.js';
+import { fmt, navigateTo } from '../app.js';
 
 export const SectionAlerts = {
   rendered: false,
@@ -23,49 +23,279 @@ export const SectionAlerts = {
   },
 
   _buildContent(container, data, rawData) {
-    // US-01: Morning Brief note (actual brief is rendered above by MorningBrief component)
-    container.appendChild(this._renderMorningBriefNote());
+    // Resumo Executivo status bar
+    container.appendChild(this._renderResumoExecutivo(data, rawData));
 
-    // US-02: Quadrant overview + High-risk patients table
-    container.appendChild(this._renderQuadrantOverview(data, rawData));
-    container.appendChild(this._renderHighRisk(data, rawData));
+    // Sinistralidade summary + ROI cards
+    container.appendChild(this._renderExecutiveCards(rawData));
+
+    // US-02: Quadrant overview + High-risk patients table (merged card)
+    container.appendChild(this._renderQuadrantAndHighRisk(data, rawData));
 
     // US-03: NIP sentiment analysis
     container.appendChild(this._renderNipSentiment(data, rawData));
 
     // US-04: Proactive risk — irritated without NIP
     container.appendChild(this._renderIrritatedNoNip(data, rawData));
-
-    // Company indicators with worsening trends
-    container.appendChild(this._renderCompanyIndicators(data, rawData));
   },
 
-  // ========== US-01: Morning Brief note ==========
-  _renderMorningBriefNote() {
-    const note = document.createElement('div');
-    note.className = 'card card--full';
-    note.innerHTML = `
-      <div class="card__body" style="padding:var(--spacing-3) var(--spacing-4);display:flex;align-items:center;gap:var(--spacing-3)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <span style="color:var(--muted-foreground);font-size:0.875rem">
-          O <strong style="color:var(--foreground)">Morning Brief</strong> com os indicadores-chave do dia esta disponivel na barra acima.
-          Clique em qualquer metrica para navegar diretamente a secao correspondente.
-        </span>
+  // ========== Resumo Executivo — status bar ==========
+  _renderResumoExecutivo(data, rawData) {
+    const bar = document.createElement('div');
+    bar.className = 'resumo-exec';
+
+    const scroll = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const criticalCount = (rawData.highRiskPatients || [])
+      .filter(p => data._companyIds.includes(p.companyId) && (p.riskLevel === 'critical'))
+      .length;
+
+    const nipCount = (rawData.nipSentimentAnalysis || [])
+      .filter(p => data._companyIds.includes(p.companyId))
+      .length;
+
+    const roi = rawData.programROI;
+    const roiLabel = `R$ ${Math.round(roi.totalSavings / 1000)}k`;
+
+    const gspRate = rawData.monthlyKPIs[data._currentMonth]?.gspRate ?? 0;
+    const npsTrend = rawData.npsTrend ?? 0;
+
+    const pills = [
+      { icon: '●', value: criticalCount, label: 'pacientes críticos', type: 'danger',   action: () => scroll('alertas-quadrant') },
+      { icon: '△', value: nipCount,      label: 'NIPs evitáveis',     type: 'warning',  action: () => scroll('alertas-nip') },
+      { icon: '$', value: roiLabel,      label: 'economia',           type: 'success',  action: () => scroll('alertas-roi') },
+      { icon: '↗', value: `+${fmt.decimal.format(npsTrend)}%`, label: 'satisfação', type: 'success', action: () => navigateTo('pulse') },
+      { icon: '↗', value: `${fmt.decimal.format(gspRate)}%`,   label: 'engajamento', type: 'neutral', action: () => navigateTo('pulse') },
+    ];
+
+    pills.forEach((pill, i) => {
+      if (i > 0) {
+        const div = document.createElement('span');
+        div.className = 'resumo-exec__divider';
+        div.textContent = '|';
+        bar.appendChild(div);
+      }
+      const btn = document.createElement('button');
+      btn.className = `resumo-exec__pill resumo-exec__pill--${pill.type}`;
+      btn.innerHTML = `<span>${pill.icon}</span><strong>${pill.value}</strong><span>${pill.label}</span>`;
+      btn.addEventListener('click', pill.action);
+      bar.appendChild(btn);
+    });
+
+    return bar;
+  },
+
+  // ========== Executive Cards — Sinistralidade + ROI ==========
+  _renderExecutiveCards(rawData) {
+    const grid = document.createElement('div');
+    grid.className = 'section-grid';
+    grid.style.cssText = 'grid-template-columns:1fr 1fr 1fr;margin-bottom:var(--space-6)';
+    grid.appendChild(this._renderSinistralidadeSummary(rawData));
+    grid.appendChild(this._renderROICard(rawData));
+    grid.appendChild(this._renderGSPCard(rawData));
+    return grid;
+  },
+
+  _renderGSPCard(rawData) {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const months = Object.keys(rawData.monthlyKPIs).sort();
+    const cur = months[months.length - 1];
+    const prev = months[months.length - 2];
+    const gspCur = rawData.monthlyKPIs[cur]?.gspRate ?? 0;
+    const gspPrev = rawData.monthlyKPIs[prev]?.gspRate ?? gspCur;
+    const delta = +(gspCur - gspPrev).toFixed(1);
+    const benchmark = rawData.engagementBenchmark ?? 7.5;
+    const sparkline = months.map(m => rawData.monthlyKPIs[m]?.gspRate ?? 0);
+
+    const deltaColor = delta >= 0 ? 'var(--success)' : 'var(--destructive)';
+    const deltaArrow = delta >= 0 ? '↑' : '↓';
+    const vsBenchmark = +(gspCur - benchmark).toFixed(1);
+    const vsColor = vsBenchmark >= 0 ? 'var(--success)' : 'var(--warning)';
+
+    card.innerHTML = `
+      <div class="card__header">
+        <div>
+          <div class="card__title">Pacientes em acompanhamento</div>
+          <div class="card__subtitle">vs ${fmt.decimal.format(benchmark)}% benchmark de mercado</div>
+        </div>
+      </div>
+      <div class="card__body">
+        <div style="font-size:var(--font-size-3xl);font-weight:var(--font-weight-bold);color:var(--foreground);line-height:1">
+          ${fmt.decimal.format(gspCur)}%
+        </div>
+        <div style="font-size:var(--font-size-sm);color:${deltaColor};margin-top:var(--space-1)">
+          ${deltaArrow} ${fmt.decimal.format(Math.abs(delta))}pp vs. mês anterior
+        </div>
+        <div id="alertas-gsp-sparkline" style="margin-top:var(--space-3);height:40px"></div>
+        <div style="font-size:var(--font-size-xs);color:${vsColor};margin-top:var(--space-2)">
+          ${vsBenchmark >= 0 ? '+' : ''}${fmt.decimal.format(vsBenchmark)}pp vs ${fmt.decimal.format(benchmark)}% mercado
+        </div>
       </div>
     `;
-    return note;
+
+    requestAnimationFrame(() => {
+      const sparkContainer = card.querySelector('#alertas-gsp-sparkline');
+      if (sparkContainer && typeof ApexCharts !== 'undefined') {
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#34AA6E';
+        new ApexCharts(sparkContainer, {
+          chart: { type: 'area', height: 40, sparkline: { enabled: true }, animations: { enabled: false } },
+          series: [{ data: sparkline }],
+          stroke: { curve: 'smooth', width: 2 },
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05 } },
+          colors: [primaryColor],
+          tooltip: { enabled: false },
+        }).render();
+      }
+    });
+
+    return card;
   },
 
-  // ========== US-02: Quadrant Overview (2x2 matrix) ==========
-  _renderQuadrantOverview(data, rawData) {
+  _renderSinistralidadeSummary(rawData) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'alertas-sinistralidade';
+
+    const months = rawData.sinistralidadeEvolucao.months;
+    const breakeven = rawData.sinistralidadeEvolucao.breakeven;
+    const latest = months[months.length - 1];
+    const prev = months[months.length - 2];
+    const delta = latest.taxa - prev.taxa;
+    const absDelta = Math.abs(delta);
+
+    const color = latest.taxa > breakeven
+      ? 'var(--destructive)'
+      : latest.taxa > breakeven - 5
+      ? 'var(--warning)'
+      : 'var(--success)';
+
+    const deltaColor = delta > 0 ? 'var(--destructive)' : 'var(--success)';
+    const deltaPrefix = delta > 0 ? '+' : '';
+    const deltaArrow = delta > 0 ? '↑' : '↓';
+
+    card.innerHTML = `
+      <div class="card__header">
+        <div>
+          <div class="card__title">Sinistralidade</div>
+          <div class="card__subtitle">vs meta de ${breakeven}%</div>
+        </div>
+      </div>
+      <div class="card__body">
+        <div style="font-size:var(--font-size-3xl);font-weight:var(--font-weight-bold);color:${color};line-height:1">
+          ${fmt.decimal.format(latest.taxa)}%
+        </div>
+        <div style="margin-top:var(--space-2);font-size:var(--font-size-sm);color:${deltaColor};font-weight:600">
+          ${deltaArrow} ${deltaPrefix}${fmt.decimal.format(absDelta)}pp vs mês anterior
+        </div>
+        <div style="margin-top:var(--space-1);font-size:var(--font-size-xs);color:var(--muted-foreground)">
+          ${latest.label} — Meta: ${breakeven}%
+        </div>
+        <button style="margin-top:var(--space-4);font-size:var(--font-size-xs);color:var(--primary);background:none;border:none;cursor:pointer;padding:0;font-weight:600"
+          id="btn-ver-sinistralidade">
+          Ver evolução completa →
+        </button>
+      </div>
+    `;
+
+    requestAnimationFrame(() => {
+      const btn = card.querySelector('#btn-ver-sinistralidade');
+      if (btn) btn.addEventListener('click', () => navigateTo('portfolios'));
+    });
+
+    return card;
+  },
+
+  _renderROICard(rawData) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'alertas-roi';
+
+    const roi = rawData.programROI;
+    const rows = [
+      { label: `PA evitados (${roi.avoidedER.count} visitas)`, value: roi.avoidedER.savings },
+      { label: `Internações evitadas (${roi.avoidedHospitalizations.count})`, value: roi.avoidedHospitalizations.savings },
+    ];
+
+    const tableRows = rows.map((r, i) => {
+      const bg = i % 2 === 0 ? 'var(--muted)' : 'transparent';
+      const radius = i % 2 === 0 ? 'var(--radius-lg)' : '0';
+      return `
+        <tr>
+          <td style="padding:var(--space-3);background:${bg};border-radius:${radius} 0 0 ${radius};font-size:var(--font-size-sm);color:var(--foreground)">${r.label}</td>
+          <td style="padding:var(--space-3);background:${bg};border-radius:0 ${radius} ${radius} 0;color:var(--success);font-weight:600;text-align:right">${fmt.currency.format(r.value)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="card__header">
+        <div>
+          <div class="card__title">Economia do Programa</div>
+          <div class="card__subtitle">Economia estimada gerada pelo programa Nilo</div>
+        </div>
+      </div>
+      <div class="card__body">
+        <table style="width:100%;border-collapse:collapse">
+          <tbody>
+            ${tableRows}
+            <tr>
+              <td style="padding:var(--space-3);font-weight:700;font-size:var(--font-size-sm);border-top:1px solid var(--border);color:var(--foreground)">Total estimado</td>
+              <td style="padding:var(--space-3);color:var(--success);font-weight:700;font-size:var(--font-size-base);text-align:right;border-top:1px solid var(--border)">${fmt.currency.format(roi.totalSavings)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    return card;
+  },
+
+  // ========== Helper: post-delegation cell ==========
+  _buildDelegatedCell(task, cell) {
+    cell.innerHTML = '';
+
+    const initials = (task.professionalName || '?')
+      .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+    const avatar = document.createElement('div');
+    avatar.style.cssText = [
+      'width:28px;height:28px;border-radius:50%',
+      'background:var(--primary);color:#fff',
+      'font-size:10px;font-weight:700',
+      'display:flex;align-items:center;justify-content:center;flex-shrink:0',
+    ].join(';');
+    avatar.textContent = initials;
+
+    const name = document.createElement('span');
+    name.style.cssText = 'font-size:var(--font-size-xs);font-weight:600;color:var(--foreground);display:block';
+    name.textContent = (task.professionalName || '').split(' ')[0];
+
+    const statusBadge = document.createElement('span');
+    statusBadge.className = 'badge badge--stable';
+    statusBadge.style.cssText = 'font-size:10px;padding:1px 6px;display:block;width:fit-content;margin-top:2px';
+    statusBadge.textContent = 'Em andamento';
+
+    const info = document.createElement('div');
+    info.style.cssText = 'display:flex;flex-direction:column';
+    info.appendChild(name);
+    info.appendChild(statusBadge);
+
+    const chip = document.createElement('div');
+    chip.style.cssText = 'display:flex;align-items:center;gap:var(--space-2)';
+    chip.appendChild(avatar);
+    chip.appendChild(info);
+    cell.appendChild(chip);
+  },
+
+  // ========== US-02: Quadrant Overview + High-risk patients (merged card) ==========
+  _renderQuadrantAndHighRisk(data, rawData) {
     const card = document.createElement('div');
     card.className = 'card card--full mt-6';
+    card.id = 'alertas-quadrant';
 
-    // Count patients per quadrant from filtered high-risk data
+    // Count patients per quadrant
     const patients = rawData.highRiskPatients
       .filter(p => data._companyIds.includes(p.companyId));
 
@@ -86,91 +316,116 @@ export const SectionAlerts = {
     card.innerHTML = `
       <div class="card__header">
         <div>
-          <div class="card__title">Visao por Quadrante — Pacientes de Alto Risco</div>
-          <div class="card__subtitle">Distribuicao dos pacientes de risco por quadrante de engajamento e plano de cuidado</div>
+          <div class="card__title">Pacientes de Alto Risco — Visao por Quadrante</div>
+          <div class="card__subtitle">Distribuicao por engajamento e plano de cuidado, com lista priorizada de pacientes sem acompanhamento ativo</div>
         </div>
       </div>
       <div class="card__body" id="quadrant-overview-body"></div>
+      <div style="border-top:1px solid var(--border);margin:0 var(--spacing-4)"></div>
+      <div class="card__body" id="high-risk-table"></div>
     `;
 
     const matrix = createQuadrantMatrix(quadrantData);
 
     requestAnimationFrame(() => {
-      const body = card.querySelector('#quadrant-overview-body');
-      if (body) {
-        body.style.display = 'flex';
-        body.style.justifyContent = 'center';
-        body.appendChild(matrix);
+      const matrixBody = card.querySelector('#quadrant-overview-body');
+      if (matrixBody) {
+        matrixBody.style.display = 'flex';
+        matrixBody.style.justifyContent = 'center';
+        matrixBody.appendChild(matrix);
       }
     });
 
-    return card;
-  },
-
-  // ========== US-02: Fila de pacientes de alto risco ==========
-  _renderHighRisk(data, rawData) {
-    const card = document.createElement('div');
-    card.className = 'card card--full mt-6';
-
-    card.innerHTML = `
-      <div class="card__header">
-        <div>
-          <div class="card__title">Pacientes de Alto Risco sem Acompanhamento Ativo</div>
-          <div class="card__subtitle">Pacientes com sinais de risco identificados nas conversas, priorizados por urgencia</div>
-        </div>
-      </div>
-      <div class="card__body" id="high-risk-table"></div>
-    `;
-
-    const patients = rawData.highRiskPatients
-      .filter(p => data._companyIds.includes(p.companyId))
-      .sort((a, b) => b.riskScore - a.riskScore);
-
     const company = (id) => rawData.companies.find(c => c.id === id)?.name || id;
 
-    const quadrantBadge = (quadrant) => {
-      if (!quadrant) return '<span class="badge badge--neutral">--</span>';
-      const label = QUADRANT_LABELS[quadrant] || quadrant;
-      const color = QUADRANT_COLORS[quadrant] || 'var(--muted-foreground)';
-      return `<span class="badge" style="color:${color};background:${color}15;border:1px solid ${color}30;font-weight:600">${label}</span>`;
-    };
-
-    const table = createDataTable({
-      columns: [
-        {
-          key: 'riskLevel', label: 'Risco', align: 'center',
-          render: (val) => { const dot = createRiskDot(val); return dot; },
-        },
-        { key: 'name', label: 'Paciente' },
-        { key: 'age', label: 'Idade', align: 'center' },
-        { key: 'companyId', label: 'Empresa', format: (val) => company(val) },
-        {
-          key: 'quadrant', label: 'Quadrante',
-          render: (val) => quadrantBadge(val),
-        },
-        { key: 'condition', label: 'Condicao sinalizadora' },
-        { key: 'lastContact', label: 'Ultimo contato', format: (val) => {
-          const d = new Date(val);
-          return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        }},
-        { key: 'daysSinceContact', label: 'Dias s/ contato', align: 'center',
-          render: (val) => {
-            const color = val > 14 ? 'var(--destructive-600)' : val > 7 ? 'var(--warning-600)' : 'var(--foreground)';
-            return `<strong style="color:${color}">${val}d</strong>`;
-          },
-        },
-        {
-          key: 'id', label: '', align: 'center',
-          render: () => `<button class="btn btn--ghost btn--sm" disabled title="Funcionalidade disponivel na versao integrada">Delegar</button>`,
-        },
-      ],
-      rows: patients,
-      highlightCondition: (row) => row.riskLevel === 'critical' ? 'danger' : null,
+    // Group by quadrant, ordered by urgency
+    const QUADRANT_ORDER = ['invisible', 'silent', 'engaged', 'ideal'];
+    const byQuadrant = {};
+    QUADRANT_ORDER.forEach(q => {
+      byQuadrant[q] = patients
+        .filter(p => p.quadrant === q)
+        .sort((a, b) => b.riskScore - a.riskScore);
     });
 
+    const columns = [
+      { key: 'name', label: 'Paciente' },
+      { key: 'age', label: 'Idade', align: 'center' },
+      { key: 'companyId', label: 'Empresa', format: (val) => company(val) },
+      { key: 'condition', label: 'Condicao sinalizadora' },
+      { key: 'lastContact', label: 'Ultimo contato', format: (val) => {
+        const d = new Date(val);
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      }},
+      {
+        key: '_action', label: '', align: 'center',
+        render: (_, patient) => {
+          const btn = document.createElement('button');
+          btn.className = 'btn btn--ghost btn--icon-sm';
+          btn.title = 'Delegar';
+          btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>`;
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            DelegarModal.open(patient, 'highRisk', rawData, (task) => {
+              this._buildDelegatedCell(task, btn.closest('td') || btn.parentElement);
+            });
+          });
+          return btn;
+        },
+      },
+    ];
+
     requestAnimationFrame(() => {
-      const body = card.querySelector('#high-risk-table');
-      if (body) body.appendChild(table);
+      const tableBody = card.querySelector('#high-risk-table');
+      if (!tableBody) return;
+
+      QUADRANT_ORDER.forEach((quadrant, idx) => {
+        const group = byQuadrant[quadrant];
+        if (!group.length) return;
+
+        const color = QUADRANT_COLORS[quadrant];
+        const label = QUADRANT_LABELS[quadrant];
+        const startOpen = quadrant === 'invisible';
+
+        // Collapsible wrapper
+        const section = document.createElement('div');
+        if (idx > 0) section.style.marginTop = 'var(--space-2)';
+
+        const header = document.createElement('button');
+        header.style.cssText = [
+          'width:100%;display:flex;align-items:center;gap:var(--space-2)',
+          'padding:var(--space-3) var(--space-4)',
+          'background:var(--muted);border:none;border-radius:var(--radius-md)',
+          'cursor:pointer;text-align:left;transition:background var(--transition-fast)',
+        ].join(';');
+        header.innerHTML = `
+          <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+            style="flex-shrink:0;transition:transform 0.2s ease;transform:${startOpen ? 'rotate(90deg)' : 'rotate(0deg)'}">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <span style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block"></span>
+          <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--foreground)">${label}</span>
+          <span style="font-size:var(--font-size-xs);color:var(--muted-foreground);margin-left:var(--space-1)">${group.length} paciente${group.length !== 1 ? 's' : ''}</span>
+        `;
+        header.addEventListener('mouseover', () => header.style.background = 'var(--accent)');
+        header.addEventListener('mouseout', () => header.style.background = 'var(--muted)');
+
+        const body = document.createElement('div');
+        body.style.cssText = `overflow:hidden;transition:max-height 0.25s ease;max-height:${startOpen ? '2000px' : '0px'}`;
+        body.appendChild(createDataTable({ columns, rows: group }));
+
+        let isOpen = startOpen;
+        header.addEventListener('click', () => {
+          isOpen = !isOpen;
+          body.style.maxHeight = isOpen ? '2000px' : '0px';
+          const chevron = header.querySelector('.collapse-chevron');
+          if (chevron) chevron.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+        });
+
+        section.appendChild(header);
+        section.appendChild(body);
+        tableBody.appendChild(section);
+      });
     });
 
     return card;
@@ -180,6 +435,7 @@ export const SectionAlerts = {
   _renderNipSentiment(data, rawData) {
     const card = document.createElement('div');
     card.className = 'card card--full mt-6';
+    card.id = 'alertas-nip';
 
     const patients = (rawData.nipSentimentAnalysis || [])
       .filter(p => data._companyIds.includes(p.companyId));
@@ -187,8 +443,6 @@ export const SectionAlerts = {
     const interceptable = patients.filter(p => p.interceptable).length;
     const total = patients.length;
     const pct = total > 0 ? Math.round((interceptable / total) * 100) : 0;
-
-    const company = (id) => rawData.companies.find(c => c.id === id)?.name || id;
 
     const sentimentLabel = (s) => {
       const map = { very_negative: 'Muito negativo', negative: 'Negativo', neutral: 'Neutro', positive: 'Positivo' };
@@ -202,21 +456,28 @@ export const SectionAlerts = {
     card.innerHTML = `
       <div class="card__header">
         <div>
-          <div class="card__title">Analise de Sentimento — Pacientes com NIP</div>
+          <div class="card__title">Pacientes com NIP: análise de conversas</div>
           <div class="card__subtitle">Conversas recentes que poderiam ter sido interceptadas antes da abertura de NIP</div>
         </div>
-        <div class="kpi-mini">
-          <span class="kpi-mini__value" style="color:var(--warning-600)">${interceptable} de ${total}</span>
-          <span class="kpi-mini__label">NIPs interceptaveis (${pct}%)</span>
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <div id="nip-sentiment-badge"></div>
+          <div class="kpi-mini">
+            <span class="kpi-mini__value" style="color:var(--warning-600)">${interceptable} de ${total}</span>
+            <span class="kpi-mini__label">NIPs interceptaveis (${pct}%)</span>
+          </div>
         </div>
       </div>
       <div class="card__body" id="nip-sentiment-table"></div>
     `;
 
+    requestAnimationFrame(() => {
+      const badgeSlot = card.querySelector('#nip-sentiment-badge');
+      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de NIP requerem cruzamento com registros do cliente.', 'Última atualização de NIP em 10/04'));
+    });
+
     const table = createDataTable({
       columns: [
         { key: 'name', label: 'Paciente' },
-        { key: 'companyId', label: 'Empresa', format: (val) => company(val) },
         { key: 'nipDate', label: 'Data NIP', format: (val) => {
           const d = new Date(val + 'T00:00:00');
           return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -230,18 +491,24 @@ export const SectionAlerts = {
             return `<span class="badge" style="color:${sentimentColor(val)};background:${sentimentColor(val)}15;border:1px solid ${sentimentColor(val)}30">${sentimentLabel(val)}</span>`;
           },
         },
-        { key: 'daysBeforeNip', label: 'Dias antes', align: 'center',
-          render: (val) => val != null ? `<strong>${val}d</strong>` : '--',
-        },
         {
-          key: 'interceptable', label: 'Interceptavel?', align: 'center',
-          render: (val) => val
-            ? '<span class="badge badge--success">Sim</span>'
-            : '<span class="badge badge--neutral">Nao</span>',
+          key: '_action', label: '', align: 'center',
+          render: (_, patient) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn--ghost btn--icon-sm';
+            btn.title = 'Delegar';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>`;
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              DelegarModal.open(patient, 'nip', rawData, (task) => {
+                this._buildDelegatedCell(task, btn.closest('td') || btn.parentElement);
+              });
+            });
+            return btn;
+          },
         },
       ],
       rows: patients,
-      highlightCondition: (row) => row.interceptable ? 'warning' : null,
     });
 
     requestAnimationFrame(() => {
@@ -266,21 +533,27 @@ export const SectionAlerts = {
 
     const highRiskCount = patients.filter(p => p.nipRisk === 'high').length;
 
-    const company = (id) => rawData.companies.find(c => c.id === id)?.name || id;
-
     card.innerHTML = `
       <div class="card__header">
         <div>
-          <div class="card__title">Pacientes Insatisfeitos sem NIP — Risco Proativo</div>
+          <div class="card__title">Pacientes insatisfeitos com risco de NIP</div>
           <div class="card__subtitle">Pacientes com sentimento negativo ou NPS baixo que ainda nao abriram NIP</div>
         </div>
-        <div class="kpi-mini">
-          <span class="kpi-mini__value" style="color:var(--destructive-600)">${highRiskCount}</span>
-          <span class="kpi-mini__label">risco alto de NIP</span>
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <div id="irritated-no-nip-badge"></div>
+          <div class="kpi-mini">
+            <span class="kpi-mini__value" style="color:var(--destructive-600)">${highRiskCount}</span>
+            <span class="kpi-mini__label">risco alto de NIP</span>
+          </div>
         </div>
       </div>
       <div class="card__body" id="irritated-no-nip-table"></div>
     `;
+
+    requestAnimationFrame(() => {
+      const badgeSlot = card.querySelector('#irritated-no-nip-badge');
+      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de NIP requerem cruzamento com registros do cliente.', 'Última atualização de NIP em 10/04'));
+    });
 
     const trendLabel = (t) => {
       const map = { worsening: '\u2193 Piorando', stable: '\u2192 Estavel', improving: '\u2191 Melhorando' };
@@ -310,7 +583,6 @@ export const SectionAlerts = {
     const table = createDataTable({
       columns: [
         { key: 'name', label: 'Paciente' },
-        { key: 'companyId', label: 'Empresa', format: (val) => company(val) },
         { key: 'nps', label: 'NPS', align: 'center',
           render: (val) => {
             const color = val <= 3 ? 'var(--destructive-600)' : val <= 5 ? 'var(--warning-600)' : 'var(--success-600, #16A34A)';
@@ -326,10 +598,25 @@ export const SectionAlerts = {
           render: (val) => `<span style="color:${sentimentColor(val)}">${sentimentLabel(val)}</span>`,
         },
         { key: 'mainTopic', label: 'Tema principal' },
-        { key: 'conversationsLast30d', label: 'Conversas 30d', align: 'center' },
         {
           key: 'nipRisk', label: 'Risco NIP', align: 'center',
           render: (val) => `<span class="badge ${riskBadgeClass(val)}">${riskLabel(val)}</span>`,
+        },
+        {
+          key: '_action', label: '', align: 'center',
+          render: (_, patient) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn--ghost btn--icon-sm';
+            btn.title = 'Delegar';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>`;
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              DelegarModal.open(patient, 'risk', rawData, (task) => {
+                this._buildDelegatedCell(task, btn.closest('td') || btn.parentElement);
+              });
+            });
+            return btn;
+          },
         },
       ],
       rows: patients,
@@ -344,87 +631,4 @@ export const SectionAlerts = {
     return card;
   },
 
-  // ========== Empresas com piora de indicadores ==========
-  _renderCompanyIndicators(data, rawData) {
-    const card = document.createElement('div');
-    card.className = 'card card--full mt-6';
-
-    const header = document.createElement('div');
-    header.className = 'card__header';
-
-    const titleDiv = document.createElement('div');
-    titleDiv.innerHTML = `
-      <div class="card__title">Empresas com Piora de Indicadores</div>
-      <div class="card__subtitle">Antecipar conversas com RH e Diretoria Comercial</div>
-    `;
-    header.appendChild(titleDiv);
-
-    card.appendChild(header);
-
-    const body = document.createElement('div');
-    body.className = 'card__body';
-
-    const indicators = (rawData.companyIndicators || [])
-      .filter(c => data._companyIds.includes(c.companyId));
-
-    const table = createDataTable({
-      columns: [
-        { key: 'companyName', label: 'Empresa' },
-        {
-          key: 'engagement', label: 'Engajamento',
-          render: (val, row) => {
-            const div = document.createElement('span');
-            div.className = 'flex items-center gap-2';
-            div.innerHTML = `<span class="font-semibold">${fmt.decimal.format(val)}%</span>`;
-            div.appendChild(createTrendBadge(
-              ((val - row.prevEngagement) / row.prevEngagement * 100),
-              true
-            ));
-            return div;
-          },
-        },
-        {
-          key: 'mentalHealthRate', label: 'Saude Mental',
-          render: (val, row) => {
-            const div = document.createElement('span');
-            div.className = 'flex items-center gap-2';
-            div.innerHTML = `<span class="font-semibold">${fmt.decimal.format(val)}%</span>`;
-            div.appendChild(createTrendBadge(
-              ((val - row.prevMentalHealthRate) / row.prevMentalHealthRate * 100),
-              false // lower is better
-            ));
-            return div;
-          },
-        },
-        {
-          key: 'status', label: 'Status',
-          render: (val) => {
-            const labels = { good: 'Estavel', attention: 'Atencao', critical: 'Critico' };
-            return createStatusBadge(val, labels[val]);
-          },
-        },
-      ],
-      rows: indicators,
-      highlightCondition: (row) => row.status === 'attention' ? 'warning' : null,
-    });
-
-    body.appendChild(table);
-
-    // Drill-down: top themes per company
-    const drillDown = document.createElement('div');
-    drillDown.className = 'mt-4';
-    indicators.forEach(ind => {
-      const row = document.createElement('div');
-      row.className = 'py-2 border-b text-sm';
-      row.innerHTML = `
-        <span class="font-semibold">${ind.companyName}:</span>
-        <span class="text-secondary ml-2">${(ind.topThemes || []).join(' \u00B7 ')}</span>
-      `;
-      drillDown.appendChild(row);
-    });
-    body.appendChild(drillDown);
-
-    card.appendChild(body);
-    return card;
-  },
 };

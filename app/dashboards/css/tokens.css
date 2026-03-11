@@ -99,9 +99,9 @@
   --shadow-ai-md: 0 4px 12px rgba(3, 122, 229, 0.3);
 
   /* Integration badge */
-  --integration-bg: var(--warning-100);
-  --integration-border: var(--warning-500);
-  --integration-text: #92400E;
+  --integration-bg: var(--neutral-100);
+  --integration-border: var(--neutral-300);
+  --integration-text: var(--muted-foreground);
 
   /* Chart palette — Nilo */
   --chart-1: #34AA6E;

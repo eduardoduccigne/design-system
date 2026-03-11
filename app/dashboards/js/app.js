@@ -7,7 +7,6 @@ import { SectionTeam } from './sections/section3-team.js';
 import { SectionEffectiveness } from './sections/section4-effectiveness.js';
 import { SectionProviders } from './sections/section5-providers.js';
 import { SectionPortfolios } from './sections/section6-portfolios.js';
-import { MorningBrief } from './components/morning-brief.js';
 import { AIPanel } from './components/ai-panel.js';
 
 // ========== Section Registry ==========
@@ -61,7 +60,7 @@ export const MONTH_LABELS = {
 // ========== Navigation / Router ==========
 let currentSection = null;
 
-function navigateTo(sectionId) {
+export function navigateTo(sectionId) {
   if (!SECTION_IDS.includes(sectionId)) sectionId = 'alerts';
   if (sectionId === currentSection) return;
 
@@ -106,6 +105,8 @@ const PERIOD_LABELS = {
   previous: 'Fev 2025',
   last3:    'Jan \u2013 Mar 2025',
   last6:    'Out 2024 \u2013 Mar 2025',
+  last12:   'Out 2024 \u2013 Mar 2025',
+  all:      'Out 2024 \u2013 Mar 2025',
 };
 
 function updateSidebarFooter() {
@@ -124,9 +125,7 @@ function updateSidebarFooter() {
 function onFilterChange() {
   const filteredData = FilterState.filterData(DASHBOARD_DATA);
 
-  // Update sidebar footer and morning brief
   updateSidebarFooter();
-  MorningBrief.refresh(filteredData, DASHBOARD_DATA);
 
   // Refresh only the current visible section
   if (currentSection) {
@@ -150,18 +149,16 @@ function onFilterChange() {
 
 // ========== Init ==========
 document.addEventListener('DOMContentLoaded', () => {
-  // Render filter bar
+  // Initialize AI Panel
+  AIPanel.init();
+
+  // Render filter bar with AI button callback
   renderFilterBar(
     document.getElementById('filter-bar'),
     DASHBOARD_DATA.companies,
-    FilterState
+    FilterState,
+    () => AIPanel.openWithSection(currentSection || 'alerts', {})
   );
-
-  // Initialize AI Panel and Morning Brief
-  AIPanel.init();
-  const briefContainer = document.getElementById('morning-brief');
-  const initialFilteredData = FilterState.filterData(DASHBOARD_DATA);
-  MorningBrief.init(briefContainer, initialFilteredData, DASHBOARD_DATA, navigateTo);
 
   // Subscribe to filter changes
   FilterState.subscribe(onFilterChange);

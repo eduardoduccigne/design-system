@@ -198,8 +198,8 @@ export const SectionTeam = {
 
       // Sentiment by role stacked 100% bar
       const sr = tp.sentimentByRole;
-      const roleLabels = ['Enfermeiro(a)', 'Administrativo', 'Prestador'];
-      const roleKeys = ['nurse', 'admin', 'provider'];
+      const roleLabels = ['Enfermeiro(a)', 'Administrativo'];
+      const roleKeys = ['nurse', 'admin'];
       createChart('chart-team-sentiment-role', {
         chart: { type: 'bar', stacked: true, stackType: '100%', height: 280 },
         series: [
@@ -244,7 +244,7 @@ export const SectionTeam = {
     const card = document.createElement('div');
     card.className = 'card card--full mt-6';
 
-    const roleLabels = { nurse: 'Enfermeiro(a)', admin: 'Administrativo', provider: 'Prestador' };
+    const roleLabels = { nurse: 'Enfermeiro(a)', admin: 'Administrativo' };
 
     card.innerHTML = `
       <div class="card__header">
@@ -256,7 +256,7 @@ export const SectionTeam = {
       <div class="card__body"></div>
     `;
 
-    const sorted = [...tp.members].sort((a, b) => b.interactionsCount - a.interactionsCount);
+    const sorted = [...tp.members].filter(m => m.role !== 'provider').sort((a, b) => b.interactionsCount - a.interactionsCount);
 
     const table = createDataTable({
       columns: [
@@ -297,7 +297,7 @@ export const SectionTeam = {
     const card = document.createElement('div');
     card.className = 'card card--full mt-6';
 
-    const sorted = [...tp.members].sort((a, b) => b.satisfactionScore - a.satisfactionScore);
+    const sorted = [...tp.members].filter(m => m.role !== 'provider').sort((a, b) => b.satisfactionScore - a.satisfactionScore);
     const top3Ids = sorted.slice(0, 3).map(m => m.id);
     const bottom2Ids = sorted.slice(-2).map(m => m.id);
 

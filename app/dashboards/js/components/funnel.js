@@ -3,7 +3,9 @@
 import { fmt } from '../app.js';
 
 /**
- * Create a CSS flex-based funnel visualization for the ER loop.
+ * Create a horizontal-bar funnel visualization.
+ * Each step has a left label, proportional bar with count+pct, and a
+ * drop-off connector between steps.
  * @param {Array<{label: string, value: number, color?: string}>} steps
  * @returns {HTMLElement} DOM element with .funnel class
  */
@@ -15,44 +17,57 @@ export function createFunnel(steps) {
 
   const maxValue = Math.max(...steps.map(s => s.value));
 
-  // Default colors for funnel steps (narrowing gradient)
-  const defaultColors = ['#037AE5', '#34AA6E', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-  steps.forEach((step, index) => {
-    const stepEl = document.createElement('div');
-    stepEl.className = 'funnel__step';
-
-    // Calculate width percentage relative to max (narrowing effect)
-    const widthPct = maxValue > 0 ? (step.value / maxValue) * 100 : 100;
-    const color = step.color || defaultColors[index % defaultColors.length];
-
-    const bar = document.createElement('div');
-    bar.className = 'funnel__bar';
-    bar.style.width = `${Math.max(widthPct, 15)}%`; // Minimum 15% for visibility
-    bar.style.backgroundColor = color;
-
-    const valueEl = document.createElement('span');
-    valueEl.className = 'funnel__value';
-    valueEl.textContent = fmt.number.format(step.value);
-    bar.appendChild(valueEl);
+  steps.forEach((step, i) => {
+    // Row: label + bar track
+    const row = document.createElement('div');
+    row.className = 'funnel__row';
 
     const labelEl = document.createElement('div');
-    labelEl.className = 'funnel__label';
+    labelEl.className = 'funnel__step-label';
     labelEl.textContent = step.label;
 
-    // Connector arrow between steps (except last)
-    stepEl.appendChild(bar);
-    stepEl.appendChild(labelEl);
-    funnel.appendChild(stepEl);
+    const track = document.createElement('div');
+    track.className = 'funnel__bar-track';
 
-    if (index < steps.length - 1) {
+    const widthPct = maxValue > 0 ? Math.max((step.value / maxValue) * 100, 12) : 100;
+    const bar = document.createElement('div');
+    bar.className = 'funnel__bar';
+    bar.style.width = `${widthPct}%`;
+    bar.style.background = step.color || '#037AE5';
+
+    const countEl = document.createElement('span');
+    countEl.className = 'funnel__bar-count';
+    countEl.textContent = fmt.number.format(step.value);
+
+    const pctEl = document.createElement('span');
+    pctEl.className = 'funnel__bar-pct';
+    pctEl.textContent = `${(step.value / maxValue * 100).toFixed(1)}%`;
+
+    bar.appendChild(countEl);
+    bar.appendChild(pctEl);
+    track.appendChild(bar);
+    row.appendChild(labelEl);
+    row.appendChild(track);
+    funnel.appendChild(row);
+
+    // Connector between steps showing drop-off
+    if (i < steps.length - 1) {
+      const next = steps[i + 1];
+      const drop = step.value - next.value;
+      const dropPct = step.value > 0 ? (drop / step.value * 100).toFixed(1) : 0;
+
       const connector = document.createElement('div');
       connector.className = 'funnel__connector';
-      connector.innerHTML = `
-        <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
-          <path d="M8 0 L8 18 M3 14 L8 20 L13 14" stroke="#A3A39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
+
+      const line = document.createElement('div');
+      line.className = 'funnel__connector-line';
+
+      const connLabel = document.createElement('span');
+      connLabel.className = 'funnel__connector-label';
+      connLabel.textContent = `↓ ${fmt.number.format(drop)} (-${dropPct}%)`;
+
+      connector.appendChild(line);
+      connector.appendChild(connLabel);
       funnel.appendChild(connector);
     }
   });
