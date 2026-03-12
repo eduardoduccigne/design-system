@@ -323,17 +323,17 @@ export const SectionPortfolios = {
             <div style="font-size:var(--text-sm);color:var(--muted-foreground);margin-bottom:2px">Premio total</div>
             <div style="font-size:1.35rem;font-weight:700;letter-spacing:-0.02em">${fmt.currency.format(totalPremio)}</div>
           </div>
-          <div id="sinistralidade-evolucao-badge" style="display:flex;align-items:center"></div>
         </div>
       </div>
       <div class="card__body">
         <div id="chart-sinistralidade-evolucao" class="chart-container chart-container--lg"></div>
       </div>
+      <div class="card__footer" id="sinistralidade-evolucao-footer"></div>
     `;
 
     requestAnimationFrame(() => {
-      const badgeSlot = card.querySelector('#sinistralidade-evolucao-badge');
-      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de sinistralidade requerem integracao com dados de utilizacao do cliente.', 'Ultima atualizacao de contas medicas em 28/02'));
+      const footerSlot = card.querySelector('#sinistralidade-evolucao-footer');
+      if (footerSlot) footerSlot.appendChild(createIntegrationBadge('Dados de sinistralidade requerem integracao com dados de utilizacao do cliente.', 'Ultima atualizacao de contas medicas em 28/02'));
 
       createChart('chart-sinistralidade-evolucao', {
         chart: { type: 'line', height: 360, toolbar: { show: false } },

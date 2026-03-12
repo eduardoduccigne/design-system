@@ -218,16 +218,12 @@ export const SectionAlerts = {
       { label: `Internações evitadas (${roi.avoidedHospitalizations.count})`, value: roi.avoidedHospitalizations.savings },
     ];
 
-    const tableRows = rows.map((r, i) => {
-      const bg = i % 2 === 0 ? 'var(--muted)' : 'transparent';
-      const radius = i % 2 === 0 ? 'var(--radius-lg)' : '0';
-      return `
+    const tableRows = rows.map((r) => `
         <tr>
-          <td style="padding:var(--space-3);background:${bg};border-radius:${radius} 0 0 ${radius};font-size:var(--font-size-sm);color:var(--foreground)">${r.label}</td>
-          <td style="padding:var(--space-3);background:${bg};border-radius:0 ${radius} ${radius} 0;color:var(--success);font-weight:600;text-align:right">${fmt.currency.format(r.value)}</td>
+          <td style="padding:var(--space-3);font-size:var(--font-size-sm);color:var(--foreground)">${r.label}</td>
+          <td style="padding:var(--space-3);color:var(--success);font-weight:600;text-align:right">${fmt.currency.format(r.value)}</td>
         </tr>
-      `;
-    }).join('');
+      `).join('');
 
     card.innerHTML = `
       <div class="card__header">
@@ -316,7 +312,37 @@ export const SectionAlerts = {
     card.innerHTML = `
       <div class="card__header">
         <div>
-          <div class="card__title">Pacientes de Alto Risco — Visao por Quadrante</div>
+          <div class="card__title" style="display:flex;align-items:center;gap:var(--space-2)">
+            Pacientes de Alto Risco — Visao por Quadrante
+            <span class="info-tooltip-anchor" style="position:relative;display:inline-flex;align-items:center">
+              <span class="info-tooltip-trigger" tabindex="0" style="
+                width:16px;height:16px;border-radius:50%;
+                background:var(--muted);border:1px solid var(--border);
+                color:var(--muted-foreground);font-size:10px;font-weight:700;
+                display:inline-flex;align-items:center;justify-content:center;
+                cursor:default;flex-shrink:0;line-height:1
+              ">i</span>
+              <span class="info-tooltip-content" style="
+                display:none;position:absolute;left:0;top:calc(100% + 6px);
+                background:var(--foreground);color:var(--background);
+                font-size:var(--font-size-xs);font-weight:400;
+                padding:var(--space-3) var(--space-4);
+                border-radius:var(--radius-md);
+                width:260px;line-height:1.5;z-index:50;
+                box-shadow:0 4px 12px rgba(0,0,0,0.15)
+              ">
+                <strong style="display:block;margin-bottom:4px">Como definimos alto risco</strong>
+                Pacientes classificados com base em padrão de uso assistencial:
+                <ul style="margin:6px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:2px">
+                  <li>Internações recentes ou recorrentes</li>
+                  <li>Uso frequente de pronto-atendimento (PA)</li>
+                  <li>Realização de exames de alta complexidade</li>
+                  <li>Doenças crônicas ou condições conhecidas de risco</li>
+                  <li>Baixo engajamento com plano de cuidado ativo</li>
+                </ul>
+              </span>
+            </span>
+          </div>
           <div class="card__subtitle">Distribuicao por engajamento e plano de cuidado, com lista priorizada de pacientes sem acompanhamento ativo</div>
         </div>
       </div>
@@ -324,6 +350,18 @@ export const SectionAlerts = {
       <div style="border-top:1px solid var(--border);margin:0 var(--spacing-4)"></div>
       <div class="card__body" id="high-risk-table"></div>
     `;
+
+    // Info tooltip behaviour
+    const trigger = card.querySelector('.info-tooltip-trigger');
+    const tooltip = card.querySelector('.info-tooltip-content');
+    if (trigger && tooltip) {
+      const show = () => { tooltip.style.display = 'block'; };
+      const hide = () => { tooltip.style.display = 'none'; };
+      trigger.addEventListener('mouseenter', show);
+      trigger.addEventListener('mouseleave', hide);
+      trigger.addEventListener('focus', show);
+      trigger.addEventListener('blur', hide);
+    }
 
     const matrix = createQuadrantMatrix(quadrantData);
 
@@ -459,20 +497,18 @@ export const SectionAlerts = {
           <div class="card__title">Pacientes com NIP: análise de conversas</div>
           <div class="card__subtitle">Conversas recentes que poderiam ter sido interceptadas antes da abertura de NIP</div>
         </div>
-        <div style="display:flex;align-items:center;gap:var(--space-3)">
-          <div id="nip-sentiment-badge"></div>
-          <div class="kpi-mini">
+        <div class="kpi-mini">
             <span class="kpi-mini__value" style="color:var(--warning-600)">${interceptable} de ${total}</span>
             <span class="kpi-mini__label">NIPs interceptaveis (${pct}%)</span>
           </div>
-        </div>
       </div>
       <div class="card__body" id="nip-sentiment-table"></div>
+      <div class="card__footer" id="nip-sentiment-footer"></div>
     `;
 
     requestAnimationFrame(() => {
-      const badgeSlot = card.querySelector('#nip-sentiment-badge');
-      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de NIP requerem cruzamento com registros do cliente.', 'Última atualização de NIP em 10/04'));
+      const footerSlot = card.querySelector('#nip-sentiment-footer');
+      if (footerSlot) footerSlot.appendChild(createIntegrationBadge('Dados de NIP requerem cruzamento com registros do cliente.', 'Última atualização de NIP em 10/04'));
     });
 
     const table = createDataTable({
@@ -539,20 +575,18 @@ export const SectionAlerts = {
           <div class="card__title">Pacientes insatisfeitos com risco de NIP</div>
           <div class="card__subtitle">Pacientes com sentimento negativo ou NPS baixo que ainda nao abriram NIP</div>
         </div>
-        <div style="display:flex;align-items:center;gap:var(--space-3)">
-          <div id="irritated-no-nip-badge"></div>
-          <div class="kpi-mini">
+        <div class="kpi-mini">
             <span class="kpi-mini__value" style="color:var(--destructive-600)">${highRiskCount}</span>
             <span class="kpi-mini__label">risco alto de NIP</span>
           </div>
-        </div>
       </div>
       <div class="card__body" id="irritated-no-nip-table"></div>
+      <div class="card__footer" id="irritated-no-nip-footer"></div>
     `;
 
     requestAnimationFrame(() => {
-      const badgeSlot = card.querySelector('#irritated-no-nip-badge');
-      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de NIP requerem cruzamento com registros do cliente.', 'Última atualização de NIP em 10/04'));
+      const footerSlot = card.querySelector('#irritated-no-nip-footer');
+      if (footerSlot) footerSlot.appendChild(createIntegrationBadge('Dados de NIP requerem cruzamento com registros do cliente.', 'Última atualização de NIP em 10/04'));
     });
 
     const trendLabel = (t) => {

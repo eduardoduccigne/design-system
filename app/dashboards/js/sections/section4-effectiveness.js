@@ -135,12 +135,12 @@ export const SectionEffectiveness = {
           <div class="card__title">Sinistralidade x Acompanhamento</div>
           <div class="card__subtitle">Correlacao entre interacoes de risco e uso de pronto-atendimento ao longo do tempo</div>
         </div>
-        <div id="sinistralidade-badge"></div>
       </div>
       <div class="card__body">
         <div id="sinistralidade-legend" class="flex gap-4 mb-3 text-sm"></div>
         <div id="chart-claims-followup" class="chart-container chart-container--lg"></div>
       </div>
+      <div class="card__footer" id="sinistralidade-footer"></div>
     `;
 
     const riskData = rawData.historicalIndicators.riskThemes || [];
@@ -207,8 +207,8 @@ export const SectionEffectiveness = {
     });
 
     requestAnimationFrame(() => {
-      const badgeSlot = card.querySelector('#sinistralidade-badge');
-      if (badgeSlot) badgeSlot.appendChild(createIntegrationBadge('Dados de sinistralidade requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
+      const footerSlot = card.querySelector('#sinistralidade-footer');
+      if (footerSlot) footerSlot.appendChild(createIntegrationBadge('Dados de sinistralidade requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
     });
 
     return card;
@@ -225,14 +225,14 @@ export const SectionEffectiveness = {
           <div class="card__title">Top Beneficiarios por Custo</div>
           <div class="card__subtitle">Beneficiarios com maior custo assistencial no periodo</div>
         </div>
-        <div id="integration-cost-marker"></div>
       </div>
       <div class="card__body"></div>
+      <div class="card__footer" id="integration-cost-footer"></div>
     `;
 
     requestAnimationFrame(() => {
-      const markerContainer = card.querySelector('#integration-cost-marker');
-      markerContainer.appendChild(createIntegrationBadge('Dados de custo assistencial requerem integracao com dados do cliente.', 'Última atualização de contas médicas em 28/02'));
+      const footerSlot = card.querySelector('#integration-cost-footer');
+      if (footerSlot) footerSlot.appendChild(createIntegrationBadge('Dados de custo assistencial requerem integracao com dados do cliente.', 'Última atualização de contas médicas em 28/02'));
     });
 
     const beneficiaries = rawData.topBeneficiariesByCost || [];

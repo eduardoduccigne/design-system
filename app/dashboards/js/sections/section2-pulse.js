@@ -286,7 +286,6 @@ export const SectionPulse = {
       <div class="card__subtitle">Tendencia de engajamento no programa GSP nos ultimos meses</div>
     `;
     header.appendChild(titleDiv);
-    header.appendChild(createIntegrationBadge('Dados de contas médicas requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
 
     // Toggles for overlays
     const toggleDiv = document.createElement('div');
@@ -310,6 +309,10 @@ export const SectionPulse = {
     body.innerHTML = '<div id="chart-engagement-evo" class="chart-container"></div>';
     card.appendChild(body);
 
+    const evoFooter = document.createElement('div');
+    evoFooter.className = 'card__footer';
+    evoFooter.appendChild(createIntegrationBadge('Dados de contas médicas requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
+    card.appendChild(evoFooter);
 
     container.appendChild(card);
 
@@ -394,7 +397,6 @@ export const SectionPulse = {
       <div class="card__subtitle">Correlacao entre volume de interacoes em temas de risco e uso de pronto atendimento</div>
     `;
     header.appendChild(titleDiv);
-    header.appendChild(createIntegrationBadge('Uso de PA requer cruzamento com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
 
     const riskToggleDiv = document.createElement('div');
     riskToggleDiv.className = 'flex items-center gap-4';
@@ -416,6 +418,11 @@ export const SectionPulse = {
     body.className = 'card__body';
     body.innerHTML = '<div id="chart-risk-themes-ts" class="chart-container"></div>';
     card.appendChild(body);
+
+    const riskFooter = document.createElement('div');
+    riskFooter.className = 'card__footer';
+    riskFooter.appendChild(createIntegrationBadge('Uso de PA requer cruzamento com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
+    card.appendChild(riskFooter);
 
     // Annotations from historicalIndicators
     const histAnnotations = (rawData.historicalIndicators?.annotations || []);
@@ -506,7 +513,6 @@ export const SectionPulse = {
       <div class="card__subtitle">Funil de interceptacao de visitas ao Pronto Atendimento</div>
     `;
     header.appendChild(titleDiv);
-    header.appendChild(createIntegrationBadge(erLoop.integrationNote, 'Última atualização de contas médicas em 28/02'));
 
     card.appendChild(header);
 
@@ -560,6 +566,11 @@ export const SectionPulse = {
       triggerText: 'Ver metodologia do calculo',
       content: erLoop.methodology,
     }));
+
+    const erFooter = document.createElement('div');
+    erFooter.className = 'card__footer';
+    erFooter.appendChild(createIntegrationBadge(erLoop.integrationNote, 'Última atualização de contas médicas em 28/02'));
+    card.appendChild(erFooter);
 
     return card;
   },
