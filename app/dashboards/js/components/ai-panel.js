@@ -63,7 +63,7 @@ export const AIPanel = {
     this._currentContext = { sectionId, ...sectionContext };
 
     const sectionNames = {
-      alerts: 'Alertas',
+      alerts: 'Oportunidades',
       pulse: 'Pulso',
       team: 'Equipe',
       effectiveness: 'Efetividade',
