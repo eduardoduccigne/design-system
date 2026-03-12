@@ -140,7 +140,13 @@ export const SectionPortfolios = {
           </tbody>
         </table>
       </div>
+      <div class="card__footer" id="indice-per-capita-footer"></div>
     `;
+
+    requestAnimationFrame(() => {
+      const footerSlot = card.querySelector('#indice-per-capita-footer');
+      if (footerSlot) footerSlot.appendChild(createIntegrationBadge('Dados de utilizacao requerem integracao com dados de utilizacao do cliente.', 'Última atualização de contas médicas em 28/02'));
+    });
 
     return card;
   },
