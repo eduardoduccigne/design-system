@@ -247,15 +247,26 @@ export const SectionPortfolios = {
       detailTd.className = 'expandable-row__detail-content';
 
       const topCost = (rawData.topCostBeneficiaries?.[company.companyId] || []);
-      const rowsHtml = topCost.map((b, i) => `
+      const rowsHtml = topCost.map((b, i) => {
+        const isDP = b.type === 'DP';
+        const badgeBg = isDP ? 'var(--muted)' : 'color-mix(in srgb, var(--primary) 12%, transparent)';
+        const badgeColor = isDP ? 'var(--muted-foreground)' : 'var(--primary)';
+        const badgeTitle = isDP ? 'Dependente' : 'Beneficiario';
+        return `
         <tr>
           <td style="color:var(--muted-foreground);font-size:0.8rem">${i + 1}</td>
-          <td class="font-semibold">${b.name}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:var(--space-2)">
+              <span title="${badgeTitle}" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:9px;font-weight:700;letter-spacing:0.03em;background:${badgeBg};color:${badgeColor};flex-shrink:0">${b.type || 'BE'}</span>
+              <span class="font-semibold" style="letter-spacing:0.05em;color:var(--muted-foreground)">••••••</span>
+            </div>
+          </td>
           <td class="text-center" style="color:var(--muted-foreground)">${b.age} anos</td>
           <td>${b.condition}</td>
           <td class="text-right"><strong style="color:${riskColors[b.riskLevel] || 'var(--foreground)'}">${fmt.currency.format(b.estimatedCost)}</strong></td>
         </tr>
-      `).join('');
+        `;
+      }).join('');
 
       detailTd.innerHTML = `
         <div style="padding:var(--space-3) var(--space-4)">
